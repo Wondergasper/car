@@ -99,7 +99,7 @@ export default function OnboardingPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Welcome to CAR-Bot</h1>
-          <p className="text-gray-600 mt-2">Let's get your organization set up for compliance</p>
+          <p className="text-gray-600 mt-2">Let&apos;s get your organization set up for compliance</p>
         </div>
 
         {/* Progress Steps */}

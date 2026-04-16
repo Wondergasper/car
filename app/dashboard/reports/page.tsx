@@ -18,6 +18,7 @@ import {
   Minus,
   FileCheck,
   Upload,
+  X,
 } from "lucide-react";
 import { api, auditsApi } from "@/lib/api";
 
