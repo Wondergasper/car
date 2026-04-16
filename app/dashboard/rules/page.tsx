@@ -1,89 +1,18 @@
 "use client";
 
-import { Shield, Check, AlertTriangle, Info } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Shield, Check, AlertTriangle, Info, Loader2 } from "lucide-react";
+import { rulesApi } from "@/lib/api";
 
-const rules = [
-  {
-    id: "NDPA-2023-Art25",
-    article: "Article 25",
-    title: "Consent Management",
-    category: "Data Privacy",
-    description: "Data controllers must obtain explicit, informed consent before collecting or processing personal data.",
-    status: "active",
-  },
-  {
-    id: "NDPA-2023-Art27",
-    article: "Article 27",
-    title: "Data Minimization",
-    category: "Data Privacy",
-    description: "Personal data collected must be adequate, relevant, and limited to what is necessary.",
-    status: "active",
-  },
-  {
-    id: "NDPA-2023-Art28",
-    article: "Article 28",
-    title: "Purpose Limitation",
-    category: "Data Privacy",
-    description: "Personal data must be collected for specified, explicit, and legitimate purposes.",
-    status: "active",
-  },
-  {
-    id: "NDPA-2023-Art31",
-    article: "Article 31",
-    title: "Access Controls",
-    category: "Access Control",
-    description: "Appropriate technical and organizational measures must be implemented to control access to personal data.",
-    status: "active",
-  },
-  {
-    id: "NDPA-2023-Art32",
-    article: "Article 32",
-    title: "Authentication",
-    category: "Access Control",
-    description: "Strong authentication mechanisms must be implemented for systems processing personal data.",
-    status: "active",
-  },
-  {
-    id: "NDPA-2023-Art38",
-    article: "Article 38",
-    title: "Encryption",
-    category: "Security",
-    description: "Personal data must be encrypted both at rest and in transit using industry-standard encryption.",
-    status: "active",
-  },
-  {
-    id: "NDPA-2023-Art40",
-    article: "Article 40",
-    title: "Audit Logging",
-    category: "Security",
-    description: "Comprehensive audit logs must be maintained for all access to and processing of personal data.",
-    status: "active",
-  },
-  {
-    id: "NDPA-2023-Art42",
-    article: "Article 42",
-    title: "Breach Notification",
-    category: "Security",
-    description: "Data breaches must be reported to NDPC within 72 hours of becoming aware of the breach.",
-    status: "active",
-  },
-  {
-    id: "NDPA-2023-Art45",
-    article: "Article 45",
-    title: "Data Subject Access Requests",
-    category: "Data Subject Rights",
-    description: "Data subjects have the right to access their personal data and receive a copy within 30 days.",
-    status: "active",
-  },
-  {
-    id: "NDPA-2023-Art47",
-    article: "Article 47",
-    title: "Right to Erasure",
-    category: "Data Subject Rights",
-    description: "Data subjects have the right to have their personal data erased (right to be forgotten).",
-    status: "active",
-  },
-];
+interface Rule {
+  rule_id: string;
+  article: string;
+  title: string;
+  category: string | null;
+  description: string;
+  severity_default: string;
+  is_active: boolean;
+}
 
 const categoryIcons: Record<string, any> = {
   "Data Privacy": Shield,
@@ -92,47 +21,126 @@ const categoryIcons: Record<string, any> = {
   "Data Subject Rights": Info,
 };
 
+const severityColors: Record<string, string> = {
+  critical: "bg-red-500/10 text-red-400 border-red-500/20",
+  high: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  medium: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+  low: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+};
+
 export default function RulesPage() {
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [filter, setFilter] = useState("all");
+
+  useEffect(() => {
+    rulesApi
+      .list()
+      .then((res) => setRules(res.data))
+      .catch(() => setError("Failed to load compliance rules."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const categories = ["all", ...Array.from(new Set(rules.map((r) => r.category ?? "Other")))];
+  const filtered = filter === "all" ? rules : rules.filter((r) => (r.category ?? "Other") === filter);
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Compliance Rules</h1>
-        <p className="text-gray-500 mt-1">
-          NDPA 2023 rules that CAR-Bot uses for compliance auditing
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Compliance Rules</h1>
+          <p className="text-gray-400 mt-1">
+            NDPA 2023 &amp; GAID 2025 rules used by CAR-Bot during auditing
+          </p>
+        </div>
+        {!loading && (
+          <span className="rounded-full bg-brand-blue/10 border border-brand-blue/20 px-3 py-1 text-sm font-medium text-brand-blue">
+            {rules.length} rules active
+          </span>
+        )}
       </div>
 
-      <div className="space-y-4">
-        {rules.map((rule) => {
-          const Icon = categoryIcons[rule.category] || Shield;
-          return (
-            <div key={rule.id} className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="flex items-start gap-x-4">
-                <div className="rounded-lg bg-primary-50 p-3">
-                  <Icon className="h-6 w-6 text-primary-600" />
+      {/* Category filter tabs */}
+      {!loading && !error && (
+        <div className="flex gap-2 flex-wrap">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilter(cat)}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium border transition-all ${
+                filter === cat
+                  ? "bg-brand-blue border-brand-blue text-white"
+                  : "bg-white/5 border-white/10 text-gray-400 hover:border-white/20 hover:text-white"
+              }`}
+            >
+              {cat === "all" ? "All" : cat}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Loading skeletons */}
+      {loading && (
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="glass-card rounded-2xl p-6 animate-pulse h-28" />
+          ))}
+        </div>
+      )}
+
+      {/* Error state */}
+      {!loading && error && (
+        <div className="glass-card rounded-2xl p-8 text-center">
+          <AlertTriangle className="h-8 w-8 text-red-400 mx-auto mb-3" />
+          <p className="text-red-400">{error}</p>
+        </div>
+      )}
+
+      {/* Rules list */}
+      {!loading && !error && (
+        <div className="space-y-4">
+          {filtered.length === 0 && (
+            <div className="glass-card rounded-2xl p-10 text-center">
+              <Shield className="h-8 w-8 text-gray-600 mx-auto mb-3" />
+              <p className="text-gray-400">No rules found for this category.</p>
+            </div>
+          )}
+          {filtered.map((rule) => {
+            const Icon = categoryIcons[rule.category ?? ""] ?? Shield;
+            const sevColor = severityColors[rule.severity_default?.toLowerCase()] ?? severityColors.low;
+            return (
+              <div
+                key={rule.rule_id}
+                className="glass-card rounded-2xl p-6 flex items-start gap-x-5 group hover:border-white/10 transition-all"
+              >
+                <div className="h-12 w-12 shrink-0 rounded-xl bg-brand-blue/10 border border-brand-blue/20 flex items-center justify-center group-hover:bg-brand-blue/20 transition-colors">
+                  <Icon className="h-6 w-6 text-brand-blue" />
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{rule.title}</h3>
-                      <p className="text-sm text-primary-600">{rule.article} • {rule.id}</p>
+                      <h3 className="text-base font-semibold text-white">{rule.title}</h3>
+                      <p className="text-sm text-brand-blue/80 mt-0.5">
+                        {rule.article} &bull; <span className="font-mono text-xs text-gray-500">{rule.rule_id}</span>
+                      </p>
                     </div>
-                    <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
-                      {rule.status}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${sevColor}`}>
+                        {rule.severity_default}
+                      </span>
+                      <span className="inline-flex items-center rounded-full bg-white/5 border border-white/10 px-2.5 py-0.5 text-xs font-medium text-gray-400">
+                        {rule.category ?? "General"}
+                      </span>
+                    </div>
                   </div>
-                  <p className="mt-2 text-sm text-gray-600">{rule.description}</p>
-                  <div className="mt-3 flex items-center gap-x-3">
-                    <span className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600">
-                      {rule.category}
-                    </span>
-                  </div>
+                  <p className="mt-2 text-sm text-gray-400 leading-relaxed">{rule.description}</p>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

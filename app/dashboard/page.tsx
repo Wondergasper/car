@@ -1,26 +1,79 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import ComplianceOverview from "@/components/ComplianceOverview";
 import ConnectorsList from "@/components/ConnectorsList";
 import RecentAudits from "@/components/RecentAudits";
+import { connectorsApi, auditsApi } from "@/lib/api";
+
+interface DashboardStats {
+  complianceScore: string;
+  activeConnectors: number;
+  openFindings: number;
+  pendingReports: number;
+  loaded: boolean;
+}
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats>({
+    complianceScore: "—",
+    activeConnectors: 0,
+    openFindings: 0,
+    pendingReports: 0,
+    loaded: false,
+  });
+
+  useEffect(() => {
+    Promise.allSettled([connectorsApi.list(), auditsApi.list()]).then(
+      ([connectorsResult, auditsResult]) => {
+        const connectors =
+          connectorsResult.status === "fulfilled" ? connectorsResult.value.data : [];
+        const audits =
+          auditsResult.status === "fulfilled" ? auditsResult.value.data : [];
+
+        const activeConnectors = connectors.filter(
+          (c: any) => c.status === "active"
+        ).length;
+
+        const completedAudits = audits.filter((a: any) => a.status === "completed");
+        const latestScore =
+          completedAudits.length > 0
+            ? `${completedAudits[completedAudits.length - 1].compliance_score ?? "—"}%`
+            : "—";
+
+        const openFindings = audits.reduce(
+          (sum: number, a: any) => sum + (a.findings_count ?? 0),
+          0
+        );
+
+        const pendingReports = audits.filter(
+          (a: any) => a.status === "in_progress" || a.status === "pending"
+        ).length;
+
+        setStats({
+          complianceScore: latestScore,
+          activeConnectors,
+          openFindings,
+          pendingReports,
+          loaded: true,
+        });
+      }
+    );
+  }, []);
+
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="space-y-8"
       variants={containerVariants}
       initial="hidden"
@@ -33,12 +86,28 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Live Stats */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Compliance Score" value="87%" trend="+5%" positive />
-        <StatCard title="Active Connectors" value="12" trend="+2" positive />
-        <StatCard title="Open Findings" value="23" trend="-8" positive />
-        <StatCard title="Pending Reports" value="3" />
+        <StatCard
+          title="Compliance Score"
+          value={stats.complianceScore}
+          loading={!stats.loaded}
+        />
+        <StatCard
+          title="Active Connectors"
+          value={String(stats.activeConnectors)}
+          loading={!stats.loaded}
+        />
+        <StatCard
+          title="Total Findings"
+          value={String(stats.openFindings)}
+          loading={!stats.loaded}
+        />
+        <StatCard
+          title="Pending Audits"
+          value={String(stats.pendingReports)}
+          loading={!stats.loaded}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -60,36 +129,26 @@ export default function DashboardPage() {
 function StatCard({
   title,
   value,
-  trend,
-  positive,
+  loading,
 }: {
   title: string;
   value: string;
-  trend?: string;
-  positive?: boolean;
+  loading?: boolean;
 }) {
   return (
-    <motion.div 
+    <motion.div
       variants={{
         hidden: { opacity: 0, scale: 0.95 },
-        visible: { opacity: 1, scale: 1 }
+        visible: { opacity: 1, scale: 1 },
       }}
       className="glass-card p-6 rounded-2xl relative overflow-hidden group"
     >
-      <div className="absolute -right-10 -top-10 w-32 h-32 bg-gradient-to-br from-brand-blue/20 to-brand-purple/20 rounded-full blur-2xl group-hover:bg-brand-cyan/20 transition-colors duration-500"></div>
+      <div className="absolute -right-10 -top-10 w-32 h-32 bg-gradient-to-br from-brand-blue/20 to-brand-purple/20 rounded-full blur-2xl group-hover:bg-brand-cyan/20 transition-colors duration-500" />
       <p className="text-sm font-medium text-gray-400 relative z-10">{title}</p>
-      <p className="mt-2 text-4xl font-bold text-white tracking-tight relative z-10">{value}</p>
-      {trend && (
-        <div className="mt-4 flex items-center gap-2 relative z-10">
-          <span
-            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${
-              positive ? "bg-green-500/10 text-green-400 border border-green-500/20" : "bg-red-500/10 text-red-400 border border-red-500/20"
-            }`}
-          >
-            {positive ? "↑" : "↓"} {trend}
-          </span>
-          <span className="text-xs text-gray-500">vs last month</span>
-        </div>
+      {loading ? (
+        <div className="mt-2 h-10 w-24 rounded bg-white/10 animate-pulse" />
+      ) : (
+        <p className="mt-2 text-4xl font-bold text-white tracking-tight relative z-10">{value}</p>
       )}
     </motion.div>
   );

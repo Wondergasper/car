@@ -9,7 +9,7 @@ from typing import List
 import json
 from datetime import datetime
 from app.db.session import get_db
-from app.models.database import User, Connector, Organization
+from app.models.database import User, Connector, Organization, ConnectorType
 from app.schemas.schemas import ConnectorCreate, ConnectorUpdate, ConnectorResponse
 from app.api.dependencies import get_current_user
 from app.core.crypto import crypto_service
@@ -236,5 +236,3 @@ async def test_connector(
             "message": f"Connection test failed: {str(e)}",
         }
 
-
-from app.models.database import ConnectorType

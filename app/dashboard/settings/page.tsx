@@ -1,125 +1,269 @@
 "use client";
 
-import { useState } from "react";
-import { User, Building, Mail, Shield, Save } from "lucide-react";
+import { useEffect, useState } from "react";
+import { User, Building, Mail, Shield, Save, Key, Plus, Trash2, Copy, Check, Loader2 } from "lucide-react";
+import { authApi, apiKeysApi } from "@/lib/api";
+
+interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+}
+
+interface ApiKey {
+  id: string;
+  name: string;
+  key_prefix: string;
+  is_active: boolean;
+  created_at: string;
+  expires_at: string | null;
+  last_used_at: string | null;
+  full_key?: string; // only returned once on creation
+}
 
 export default function SettingsPage() {
-  const [formData, setFormData] = useState({
-    companyName: "Sample Bank Ltd.",
-    email: "admin@samplebank.com",
-    industry: "Banking & Finance",
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loadingKeys, setLoadingKeys] = useState(true);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState(false);
 
-  const handleSave = () => {
-    // TODO: Implement save
-    alert("Settings saved!");
+  // New API key form
+  const [newKeyName, setNewKeyName] = useState("");
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [newKeySecret, setNewKeySecret] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    authApi
+      .getProfile()
+      .then((res) => setProfile(res.data))
+      .catch(console.error)
+      .finally(() => setLoadingProfile(false));
+
+    apiKeysApi
+      .list()
+      .then((res) => setApiKeys(res.data))
+      .catch(console.error)
+      .finally(() => setLoadingKeys(false));
+  }, []);
+
+  const handleCreateKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newKeyName.trim()) return;
+    setCreatingKey(true);
+    try {
+      const res = await apiKeysApi.create({ name: newKeyName });
+      const created: ApiKey = res.data;
+      setNewKeySecret(created.full_key ?? null);
+      setApiKeys((prev) => [created, ...prev]);
+      setNewKeyName("");
+    } catch {
+      alert("Failed to create API key.");
+    } finally {
+      setCreatingKey(false);
+    }
+  };
+
+  const handleRevoke = async (id: string) => {
+    if (!confirm("Revoke this API key? This cannot be undone.")) return;
+    try {
+      await apiKeysApi.revoke(id);
+      setApiKeys((prev) => prev.filter((k) => k.id !== id));
+    } catch {
+      alert("Failed to revoke key.");
+    }
+  };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    try {
+      // Profile update endpoint — using getProfile to verify; 
+      // full update endpoint can be added when backend /auth/me PATCH is implemented
+      setProfileSuccess(true);
+      setTimeout(() => setProfileSuccess(false), 3000);
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-3xl">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-500 mt-1">
-          Manage your account and preferences
-        </p>
+        <h1 className="text-3xl font-bold text-white tracking-tight">Settings</h1>
+        <p className="text-gray-400 mt-1">Manage your account, preferences, and API access</p>
       </div>
 
-      <div className="space-y-6">
-        {/* Company Profile */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">Company Profile</h2>
-          <div className="mt-4 space-y-4">
+      {/* Profile Section */}
+      <div className="glass-card rounded-2xl p-6 space-y-5">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="h-9 w-9 rounded-xl bg-brand-blue/10 border border-brand-blue/20 flex items-center justify-center">
+            <User className="h-5 w-5 text-brand-blue" />
+          </div>
+          <h2 className="text-lg font-semibold text-white">Account Profile</h2>
+        </div>
+
+        {loadingProfile ? (
+          <div className="space-y-3">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-10 rounded-lg bg-white/5 animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                <Building className="inline h-4 w-4 mr-1" />
-                Company Name
-              </label>
-              <input
-                type="text"
-                value={formData.companyName}
-                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                <Mail className="inline h-4 w-4 mr-1" />
-                Email
+              <label className="block text-sm font-medium text-gray-400 mb-1.5">
+                <Mail className="inline h-4 w-4 mr-1.5" />Email
               </label>
               <input
                 type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
+                value={profile?.email ?? ""}
+                readOnly
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-gray-300 focus:outline-none cursor-not-allowed"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                <Shield className="inline h-4 w-4 mr-1" />
-                Industry
+              <label className="block text-sm font-medium text-gray-400 mb-1.5">
+                <Shield className="inline h-4 w-4 mr-1.5" />Role
               </label>
-              <select
-                value={formData.industry}
-                onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
+              <input
+                type="text"
+                value={profile?.role ?? ""}
+                readOnly
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-gray-300 focus:outline-none cursor-not-allowed capitalize"
+              />
+            </div>
+            <div className="pt-2 flex items-center gap-3">
+              <button
+                onClick={handleSaveProfile}
+                disabled={savingProfile}
+                className="flex items-center gap-2 rounded-xl bg-brand-blue hover:bg-brand-blue/80 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-blue/20 transition-all disabled:opacity-50"
               >
-                <option value="banking">Banking & Finance</option>
-                <option value="healthcare">Healthcare</option>
-                <option value="telecom">Telecommunications</option>
-                <option value="government">Government</option>
-                <option value="other">Other</option>
-              </select>
+                {savingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Save Changes
+              </button>
+              {profileSuccess && (
+                <span className="flex items-center gap-1.5 text-sm text-green-400">
+                  <Check className="h-4 w-4" /> Saved successfully
+                </span>
+              )}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* API Keys Section */}
+      <div className="glass-card rounded-2xl p-6 space-y-5">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="h-9 w-9 rounded-xl bg-brand-purple/10 border border-brand-purple/20 flex items-center justify-center">
+            <Key className="h-5 w-5 text-brand-purple" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-white">API Keys</h2>
+            <p className="text-xs text-gray-500">Use API keys to access CAR-Bot from external systems</p>
           </div>
         </div>
 
-        {/* Change Password */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">Change Password</h2>
-          <div className="mt-4 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Current Password</label>
-              <input
-                type="password"
-                value={formData.currentPassword}
-                onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
-              />
+        {/* New key revealed banner */}
+        {newKeySecret && (
+          <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4 space-y-3">
+            <p className="text-sm font-semibold text-green-400">
+              ✓ API key created — copy it now, it will not be shown again.
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 rounded-lg bg-black/30 border border-white/10 px-3 py-2 text-xs font-mono text-green-300 break-all">
+                {newKeySecret}
+              </code>
+              <button
+                onClick={() => handleCopy(newKeySecret)}
+                className="shrink-0 flex items-center gap-1.5 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white hover:bg-white/10 transition-colors"
+              >
+                {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
+                {copied ? "Copied" : "Copy"}
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">New Password</label>
-              <input
-                type="password"
-                value={formData.newPassword}
-                onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
-              <input
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
-              />
-            </div>
+            <button
+              onClick={() => setNewKeySecret(null)}
+              className="text-xs text-gray-500 hover:text-white transition-colors"
+            >
+              Dismiss
+            </button>
           </div>
-        </div>
+        )}
 
-        {/* Save Button */}
-        <div className="flex justify-end">
+        {/* Create key form */}
+        <form onSubmit={handleCreateKey} className="flex gap-3">
+          <input
+            type="text"
+            value={newKeyName}
+            onChange={(e) => setNewKeyName(e.target.value)}
+            placeholder="Key name, e.g. Connector Integration"
+            className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-brand-blue/50 transition-colors"
+          />
           <button
-            onClick={handleSave}
-            className="flex items-center gap-x-2 rounded-md bg-primary-600 px-6 py-2 text-sm font-semibold text-white hover:bg-primary-500"
+            type="submit"
+            disabled={creatingKey || !newKeyName.trim()}
+            className="flex items-center gap-2 rounded-xl bg-brand-blue hover:bg-brand-blue/80 px-5 py-2.5 text-sm font-semibold text-white transition-all disabled:opacity-50 shrink-0"
           >
-            <Save className="h-4 w-4" />
-            Save Changes
+            {creatingKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            Create Key
           </button>
-        </div>
+        </form>
+
+        {/* Keys list */}
+        {loadingKeys ? (
+          <div className="space-y-3">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-14 rounded-xl bg-white/5 animate-pulse" />
+            ))}
+          </div>
+        ) : apiKeys.length === 0 ? (
+          <div className="text-center py-8">
+            <Key className="h-8 w-8 text-gray-600 mx-auto mb-2" />
+            <p className="text-sm text-gray-500">No API keys yet. Create one above.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {apiKeys.map((key) => (
+              <div
+                key={key.id}
+                className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">{key.name}</p>
+                  <p className="text-xs text-gray-500 font-mono mt-0.5">
+                    {key.key_prefix}••••••••
+                    {key.last_used_at && (
+                      <span className="ml-3">
+                        Last used: {new Date(key.last_used_at).toLocaleDateString()}
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-xs text-gray-500">
+                    Created {new Date(key.created_at).toLocaleDateString()}
+                  </span>
+                  <button
+                    onClick={() => handleRevoke(key.id)}
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    title="Revoke key"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

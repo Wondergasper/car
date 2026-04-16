@@ -22,8 +22,9 @@ export default function LoginPage() {
       // TODO: Replace with actual API call
       await login(email, password);
       router.push("/dashboard");
-    } catch (err) {
-      setError("Invalid email or password");
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail;
+      setError(msg || "Invalid email or password");
     } finally {
       setLoading(false);
     }

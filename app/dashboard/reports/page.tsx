@@ -19,7 +19,7 @@ import {
   FileCheck,
   Upload,
 } from "lucide-react";
-import apiClient from "@/lib/api";
+import { api, auditsApi } from "@/lib/api";
 
 interface Audit {
   id: string;
@@ -74,17 +74,15 @@ export default function FilingPortalPage() {
   const { data: audits, isLoading } = useQuery({
     queryKey: ["audits"],
     queryFn: async () => {
-      const response = await apiClient.get("/audits");
+      const response = await api.get("/audits");
       return response.data as Audit[];
     },
   });
 
   const handleDownload = async (auditId: string) => {
     try {
-      const response = await apiClient.get(`/audits/${auditId}/download`);
-      const { download_url, filename } = response.data;
-
-      // Open presigned URL in new tab
+      const response = await api.get(`/audits/${auditId}/download`);
+      const { download_url } = response.data;
       window.open(download_url, "_blank");
     } catch (error) {
       console.error("Failed to download report:", error);
@@ -270,7 +268,9 @@ function AuditFilingCard({
   const score = audit.compliance_score || 0;
   const scoreColor = score >= 80 ? "text-green-600" : score >= 60 ? "text-yellow-600" : "text-red-600";
 
-  const submissionStatus: FilingRecord["submission_status"] = audit.report_storage_key ? "ready" : "draft";
+  // Derive filing status from audit status (no report_storage_key on frontend)
+  const submissionStatus: FilingRecord["submission_status"] =
+    audit.status === "completed" ? "ready" : "draft";
   const SubIcon = submissionConfig[submissionStatus].icon;
 
   return (
@@ -320,7 +320,7 @@ function AuditFilingCard({
             >
               <Eye className="h-4 w-4" />
             </button>
-            {audit.report_storage_key ? (
+            {audit.status === "completed" ? (
               <button
                 onClick={() => onDownload(audit.id)}
                 className="flex items-center gap-x-2 rounded-md bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-500"

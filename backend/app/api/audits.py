@@ -4,7 +4,7 @@ Triggers the audit processor to run the full pipeline:
 connector events → PII scanner → rules engine → findings → score.
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from datetime import datetime, timedelta
@@ -85,7 +85,7 @@ async def generate_audit(
     result = await db.execute(
         select(Audit).where(
             Audit.org_id == org.id,
-            Audit.created_at >= func.now() - timedelta(days=30)
+            Audit.created_at >= datetime.utcnow() - timedelta(days=30)
         )
     )
     monthly_audits = len(result.scalars().all())
