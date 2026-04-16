@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
+is_supabase = "supabase" in settings.DATABASE_URL.lower()
+connect_args = {"statement_cache_size": 0} if is_supabase else {}
+
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=False,
@@ -15,6 +18,8 @@ engine = create_async_engine(
     max_overflow=40,
     pool_timeout=30,
     pool_recycle=1800,
+    pool_pre_ping=True,  # Recommended for remote DBs like Supabase
+    connect_args=connect_args, # Disables prepared statements for PgBouncer
 )
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 

@@ -104,6 +104,7 @@ class AuditContext:
         self.gaid_consent_records: List[Dict[str, Any]] = []
         self.gaid_transparency_notice: bool = False
         self.gaid_data_portability: bool = False
+        self.dpia_records: List[Dict[str, Any]] = []
 
 
 class RulesEngine:
@@ -202,13 +203,13 @@ class RulesEngine:
 
     def _check_consent_management(self):
         """
-        NDPA 2023 Article 25 - Consent must be explicit, informed, recorded.
+        NDPA 2023 Section 25 - Consent must be explicit, informed, recorded.
         Checks: consent records exist AND collection method is documented.
         """
         if not self.context.consent_records:
             self._add_finding(
-                rule_id="NDPA-2023-Art25",
-                article="Article 25",
+                rule_id="NDPA-2023-Sec25",
+                article="Section 25",
                 title="No Consent Records Found",
                 severity=Severity.CRITICAL,
                 description=(
@@ -231,8 +232,8 @@ class RulesEngine:
             )
         elif not self.context.consent_collection_method:
             self._add_finding(
-                rule_id="NDPA-2023-Art25",
-                article="Article 25",
+                rule_id="NDPA-2023-Sec25",
+                article="Section 25",
                 title="Consent Collection Method Not Documented",
                 severity=Severity.HIGH,
                 description=(
@@ -246,7 +247,7 @@ class RulesEngine:
 
     def _check_data_minimization(self):
         """
-        NDPA 2023 Article 27 - Data must be adequate, relevant, limited.
+        NDPA 2023 Section 27 - Data must be adequate, relevant, limited.
         Checks: number of personal data fields per record exceeds threshold.
         """
         if self.context.personal_data_fields:
@@ -254,8 +255,8 @@ class RulesEngine:
             if field_count > self.MAX_PERSONAL_DATA_FIELDS:
                 excessive = self.context.excessive_fields or self.context.personal_data_fields[self.MAX_PERSONAL_DATA_FIELDS:]
                 self._add_finding(
-                    rule_id="NDPA-2023-Art27",
-                    article="Article 27",
+                    rule_id="NDPA-2023-Sec27",
+                    article="Section 27",
                     title=f"Excessive Personal Data Fields ({field_count} collected)",
                     severity=Severity.HIGH,
                     description=(
@@ -282,13 +283,13 @@ class RulesEngine:
 
     def _check_purpose_limitation(self):
         """
-        NDPA 2023 Article 28 - Data collected for specified, legitimate purposes.
+        NDPA 2023 Section 28 - Data collected for specified, legitimate purposes.
         Checks: purpose statements exist and map to actual processing.
         """
         if not self.context.purpose_statements and not self.context.data_processing_purposes:
             self._add_finding(
-                rule_id="NDPA-2023-Art28",
-                article="Article 28",
+                rule_id="NDPA-2023-Sec28",
+                article="Section 28",
                 title="No Purpose Limitation Documentation",
                 severity=Severity.HIGH,
                 description=(
@@ -314,11 +315,11 @@ class RulesEngine:
     # ==================== NDPA 2023: Access Control ====================
 
     def _check_access_controls(self):
-        """NDPA 2023 Article 31 - Appropriate access controls required."""
+        """NDPA 2023 Section 31 - Appropriate access controls required."""
         if not self.context.access_control_policy and not self.context.role_based_access:
             self._add_finding(
-                rule_id="NDPA-2023-Art31",
-                article="Article 31",
+                rule_id="NDPA-2023-Sec31",
+                article="Section 31",
                 title="No Access Control Policy Detected",
                 severity=Severity.CRITICAL,
                 description=(
@@ -341,11 +342,11 @@ class RulesEngine:
             )
 
     def _check_authentication(self):
-        """NDPA 2023 Article 32 - Strong authentication required."""
+        """NDPA 2023 Section 32 - Strong authentication required."""
         if not self.context.mfa_enabled:
             self._add_finding(
-                rule_id="NDPA-2023-Art32",
-                article="Article 32",
+                rule_id="NDPA-2023-Sec32",
+                article="Section 32",
                 title="Multi-Factor Authentication Not Enabled",
                 severity=Severity.HIGH,
                 description=(
@@ -363,11 +364,11 @@ class RulesEngine:
             )
 
     def _check_authorization(self):
-        """NDPA 2023 Article 33 - Authorization audit trail required."""
+        """NDPA 2023 Section 33 - Authorization audit trail required."""
         if not self.context.authorization_audit_trail:
             self._add_finding(
-                rule_id="NDPA-2023-Art33",
-                article="Article 33",
+                rule_id="NDPA-2023-Sec33",
+                article="Section 33",
                 title="No Authorization Audit Trail",
                 severity=Severity.MEDIUM,
                 description=(
@@ -382,13 +383,13 @@ class RulesEngine:
 
     def _check_data_retention(self):
         """
-        NDPA 2023 Article 35 - Data must not be kept longer than necessary.
+        NDPA 2023 Section 35 - Data must not be kept longer than necessary.
         Checks: retention policy exists AND old records are flagged.
         """
         if not self.context.retention_policy:
             self._add_finding(
-                rule_id="NDPA-2023-Art35",
-                article="Article 35",
+                rule_id="NDPA-2023-Sec35",
+                article="Section 35",
                 title="No Data Retention Policy",
                 severity=Severity.HIGH,
                 description=(
@@ -414,8 +415,8 @@ class RulesEngine:
             age_days = (datetime.utcnow() - self.context.oldest_record_date).days
             if age_days > self.MAX_RECORD_AGE_DAYS:
                 self._add_finding(
-                    rule_id="NDPA-2023-Art35-Old",
-                    article="Article 35",
+                    rule_id="NDPA-2023-Sec35-Old",
+                    article="Section 35",
                     title=f"Records Older Than {self.MAX_RECORD_AGE_DAYS // 365} Years Detected",
                     severity=Severity.HIGH,
                     description=(
@@ -436,11 +437,11 @@ class RulesEngine:
                 )
 
     def _check_deletion_procedures(self):
-        """NDPA 2023 Article 36 - Secure deletion procedures required."""
+        """NDPA 2023 Section 36 - Secure deletion procedures required."""
         if not self.context.deletion_procedures:
             self._add_finding(
-                rule_id="NDPA-2023-Art36",
-                article="Article 36",
+                rule_id="NDPA-2023-Sec36",
+                article="Section 36",
                 title="No Secure Deletion Procedures",
                 severity=Severity.MEDIUM,
                 description=(
@@ -455,11 +456,11 @@ class RulesEngine:
     # ==================== NDPA 2023: Security ====================
 
     def _check_encryption_at_rest(self):
-        """NDPA 2023 Article 38 - Data at rest must be encrypted."""
+        """NDPA 2023 Section 38 - Data at rest must be encrypted."""
         if not self.context.encryption_at_rest:
             self._add_finding(
-                rule_id="NDPA-2023-Art38-Rest",
-                article="Article 38",
+                rule_id="NDPA-2023-Sec38-Rest",
+                article="Section 38",
                 title="Data at Rest Encryption Not Enabled",
                 severity=Severity.CRITICAL,
                 description=(
@@ -479,11 +480,11 @@ class RulesEngine:
             )
 
     def _check_encryption_in_transit(self):
-        """NDPA 2023 Article 38 - Data in transit must be encrypted."""
+        """NDPA 2023 Section 38 - Data in transit must be encrypted."""
         if not self.context.encryption_in_transit:
             self._add_finding(
-                rule_id="NDPA-2023-Art38-Transit",
-                article="Article 38",
+                rule_id="NDPA-2023-Sec38-Transit",
+                article="Section 38",
                 title="Data in Transit Encryption Not Enabled",
                 severity=Severity.CRITICAL,
                 description=(
@@ -497,11 +498,11 @@ class RulesEngine:
             )
 
     def _check_audit_logging(self):
-        """NDPA 2023 Article 40 - Comprehensive audit logging required."""
+        """NDPA 2023 Section 40 - Comprehensive audit logging required."""
         if not self.context.audit_logging_enabled:
             self._add_finding(
-                rule_id="NDPA-2023-Art40",
-                article="Article 40",
+                rule_id="NDPA-2023-Sec40",
+                article="Section 40",
                 title="Audit Logging Not Enabled",
                 severity=Severity.HIGH,
                 description=(
@@ -520,11 +521,11 @@ class RulesEngine:
             )
 
     def _check_breach_notification(self):
-        """NDPA 2023 Article 42 - Breach notification within 72 hours."""
+        """NDPA 2023 Section 42 - Breach notification within 72 hours."""
         if not self.context.breach_notification_procedure and not self.context.breach_response_plan:
             self._add_finding(
-                rule_id="NDPA-2023-Art42",
-                article="Article 42",
+                rule_id="NDPA-2023-Sec42",
+                article="Section 42",
                 title="No Breach Notification Procedure",
                 severity=Severity.CRITICAL,
                 description=(
@@ -550,11 +551,11 @@ class RulesEngine:
     # ==================== NDPA 2023: Data Subject Rights ====================
 
     def _check_data_subject_access(self):
-        """NDPA 2023 Article 45 - DSAR procedure required."""
+        """NDPA 2023 Section 45 - DSAR procedure required."""
         if not self.context.dsar_procedure:
             self._add_finding(
-                rule_id="NDPA-2023-Art45",
-                article="Article 45",
+                rule_id="NDPA-2023-Sec45",
+                article="Section 45",
                 title="No Data Subject Access Request Procedure",
                 severity=Severity.HIGH,
                 description=(
@@ -575,11 +576,11 @@ class RulesEngine:
             )
 
     def _check_rectification(self):
-        """NDPA 2023 Article 46 - Right to rectification."""
+        """NDPA 2023 Section 46 - Right to rectification."""
         if not self.context.rectification_procedure:
             self._add_finding(
-                rule_id="NDPA-2023-Art46",
-                article="Article 46",
+                rule_id="NDPA-2023-Sec46",
+                article="Section 46",
                 title="No Data Rectification Procedure",
                 severity=Severity.MEDIUM,
                 description=(
@@ -591,11 +592,11 @@ class RulesEngine:
             )
 
     def _check_erasure(self):
-        """NDPA 2023 Article 47 - Right to erasure."""
+        """NDPA 2023 Section 47 - Right to erasure."""
         if not self.context.erasure_procedure:
             self._add_finding(
-                rule_id="NDPA-2023-Art47",
-                article="Article 47",
+                rule_id="NDPA-2023-Sec47",
+                article="Section 47",
                 title="No Data Erasure Procedure",
                 severity=Severity.HIGH,
                 description=(
@@ -652,7 +653,7 @@ class RulesEngine:
             locations = list(set(p.location for p in critical_pii))
             self._add_finding(
                 rule_id="NDPA-2023-PII-Critical",
-                article="Articles 25, 38",
+                article="Sections 25, 38",
                 title=f"High-Volume Critical PII Detected ({total_critical} instances)",
                 severity=Severity.HIGH,
                 description=(
@@ -686,7 +687,7 @@ class RulesEngine:
         if log_pii:
             self._add_finding(
                 rule_id="NDPA-2023-PII-Logs",
-                article="Articles 38, 40",
+                article="Sections 38, 40",
                 title="PII Found in Log/Audit Locations",
                 severity=Severity.HIGH,
                 description=(
@@ -716,7 +717,7 @@ class RulesEngine:
 
     def _check_cross_border_transfers(self):
         """
-        NDPA 2023 Article 48 + GAID 2025 - Cross-border data transfer restrictions.
+        NDPA 2023 Section 48 + GAID 2025 - Cross-border data transfer restrictions.
         This is the HIGHEST-VALUE rule: data stored outside Nigeria in countries
         without adequacy status is the most common violation and biggest fine trigger.
 
@@ -728,8 +729,8 @@ class RulesEngine:
         if not self.context.data_locations:
             # Can't assess cross-border without location data
             self._add_finding(
-                rule_id="NDPA-2023-Art48-Unknown",
-                article="Article 48",
+                rule_id="NDPA-2023-Sec48-Unknown",
+                article="Section 48",
                 title="Data Storage Locations Unknown",
                 severity=Severity.HIGH,
                 description=(
@@ -759,10 +760,11 @@ class RulesEngine:
         for loc in self.context.data_locations:
             country = loc.get("country", "").lower()
             has_safeguards = loc.get("safeguards", False)  # SCCs, BCRs, etc.
+            has_dpia = loc.get("dpia_conducted", False) # GAID 2025 requirement
 
             # Nigeria is fine, check others
             if country != "nigeria" and country not in [c.lower() for c in self.context.adequacy_countries]:
-                if not has_safeguards:
+                if not has_safeguards or not has_dpia:
                     non_adequate_locations.append(loc)
 
         if non_adequate_locations:
@@ -771,22 +773,21 @@ class RulesEngine:
                 for loc in non_adequate_locations[:5]
             )
             self._add_finding(
-                rule_id="NDPA-2023-Art48",
-                article="Article 48",
-                title=f"Cross-Border Data Transfer Without Adequacy ({len(non_adequate_locations)} locations)",
+                rule_id="NDPA-2023-Sec48",
+                article="Section 48",
+                title=f"Cross-Border Data Transfer Risk ({len(non_adequate_locations)} locations)",
                 severity=Severity.CRITICAL,
                 description=(
                     f"Personal data is stored in {len(non_adequate_locations)} location(s) "
-                    f"in countries without recognized adequacy status and without documented "
-                    f"safeguards: {locations_str}. "
-                    f"This is a direct violation of NDPA 2023 cross-border transfer restrictions "
-                    f"and is the most common fine trigger."
+                    f"in countries without recognized adequacy status, or lacking documented "
+                    f"safeguards and a mandatory Data Privacy Impact Assessment (DPIA): {locations_str}. "
+                    f"This violates NDPA 2023 Section 48 and GAID 2025 Schedule 5."
                 ),
                 recommendation=(
-                    "Either: (1) Move data to Nigeria or an adequacy country, "
+                    "Either: (1) Move data to an adequacy country, "
                     "(2) Implement Standard Contractual Clauses (SCCs), "
-                    "(3) Obtain explicit consent for the transfer, or "
-                    "(4) Apply Binding Corporate Rules (BCRs) if applicable."
+                    "(3) Obtain explicit consent for the transfer, AND "
+                    "(4) Conduct a mandatory DPIA for the transfer as per GAID 2025."
                 ),
                 remediation_template="cross_border_fix",
                 evidence={
@@ -813,8 +814,8 @@ class RulesEngine:
             ]
             if unprotected:
                 self._add_finding(
-                    rule_id="NDPA-2023-Art48-Transfer",
-                    article="Article 48",
+                    rule_id="NDPA-2023-Sec48-Transfer",
+                    article="Section 48",
                     title=f"Unprotected Cross-Border Transfers Detected ({len(unprotected)} transfers)",
                     severity=Severity.CRITICAL,
                     description=(
@@ -837,7 +838,7 @@ class RulesEngine:
         if not self.context.gaid_consent_records and not self.context.consent_records:
             self._add_finding(
                 rule_id="GAID-2025-Consent",
-                article="GAID Section 4",
+                article="GAID Article 17",
                 title="No GAID-Compliant Consent Records",
                 severity=Severity.HIGH,
                 description=(
@@ -860,7 +861,7 @@ class RulesEngine:
         if not self.context.gaid_transparency_notice:
             self._add_finding(
                 rule_id="GAID-2025-Transparency",
-                article="GAID Section 6",
+                article="GAID Article 27",
                 title="No GAID-Compliant Transparency Notice",
                 severity=Severity.MEDIUM,
                 description=(
@@ -885,7 +886,7 @@ class RulesEngine:
         if not self.context.gaid_data_portability:
             self._add_finding(
                 rule_id="GAID-2025-Portability",
-                article="GAID Section 8",
+                article="GAID Article 37",
                 title="No Data Portability Mechanism",
                 severity=Severity.MEDIUM,
                 description=(
@@ -956,8 +957,8 @@ class RulesEngine:
 COMPLIANCE_RULES = [
     # NDPA 2023: Data Privacy
     {
-        "rule_id": "NDPA-2023-Art25",
-        "article": "Article 25",
+        "rule_id": "NDPA-2023-Sec25",
+        "article": "Section 25",
         "title": "Consent Management",
         "description": "Data controllers must obtain explicit, informed consent before collecting or processing personal data.",
         "category": "data_privacy",
@@ -966,8 +967,8 @@ COMPLIANCE_RULES = [
         "severity_default": "critical",
     },
     {
-        "rule_id": "NDPA-2023-Art27",
-        "article": "Article 27",
+        "rule_id": "NDPA-2023-Sec27",
+        "article": "Section 27",
         "title": "Data Minimization",
         "description": "Personal data collected must be adequate, relevant, and limited to what is necessary.",
         "category": "data_privacy",
@@ -976,8 +977,8 @@ COMPLIANCE_RULES = [
         "severity_default": "high",
     },
     {
-        "rule_id": "NDPA-2023-Art28",
-        "article": "Article 28",
+        "rule_id": "NDPA-2023-Sec28",
+        "article": "Section 28",
         "title": "Purpose Limitation",
         "description": "Personal data must be collected for specified, explicit, and legitimate purposes.",
         "category": "data_privacy",
@@ -988,8 +989,8 @@ COMPLIANCE_RULES = [
 
     # NDPA 2023: Access Control
     {
-        "rule_id": "NDPA-2023-Art31",
-        "article": "Article 31",
+        "rule_id": "NDPA-2023-Sec31",
+        "article": "Section 31",
         "title": "Access Controls",
         "description": "Appropriate technical and organizational measures must be implemented to control access to personal data.",
         "category": "access_control",
@@ -998,8 +999,8 @@ COMPLIANCE_RULES = [
         "severity_default": "critical",
     },
     {
-        "rule_id": "NDPA-2023-Art32",
-        "article": "Article 32",
+        "rule_id": "NDPA-2023-Sec32",
+        "article": "Section 32",
         "title": "Authentication",
         "description": "Strong authentication mechanisms must be implemented for systems processing personal data.",
         "category": "access_control",
@@ -1008,8 +1009,8 @@ COMPLIANCE_RULES = [
         "severity_default": "high",
     },
     {
-        "rule_id": "NDPA-2023-Art33",
-        "article": "Article 33",
+        "rule_id": "NDPA-2023-Sec33",
+        "article": "Section 33",
         "title": "Authorization",
         "description": "Access to personal data must be restricted based on role and need-to-know basis.",
         "category": "access_control",
@@ -1020,8 +1021,8 @@ COMPLIANCE_RULES = [
 
     # NDPA 2023: Data Retention
     {
-        "rule_id": "NDPA-2023-Art35",
-        "article": "Article 35",
+        "rule_id": "NDPA-2023-Sec35",
+        "article": "Section 35",
         "title": "Data Retention",
         "description": "Personal data must not be kept longer than necessary for the purposes for which it is processed.",
         "category": "retention",
@@ -1030,8 +1031,8 @@ COMPLIANCE_RULES = [
         "severity_default": "high",
     },
     {
-        "rule_id": "NDPA-2023-Art36",
-        "article": "Article 36",
+        "rule_id": "NDPA-2023-Sec36",
+        "article": "Section 36",
         "title": "Deletion Procedures",
         "description": "Secure procedures must be in place for the deletion of personal data when no longer needed.",
         "category": "retention",
@@ -1042,8 +1043,8 @@ COMPLIANCE_RULES = [
 
     # NDPA 2023: Security
     {
-        "rule_id": "NDPA-2023-Art38",
-        "article": "Article 38",
+        "rule_id": "NDPA-2023-Sec38",
+        "article": "Section 38",
         "title": "Encryption",
         "description": "Personal data must be encrypted both at rest and in transit using industry-standard encryption.",
         "category": "security",
@@ -1052,8 +1053,8 @@ COMPLIANCE_RULES = [
         "severity_default": "critical",
     },
     {
-        "rule_id": "NDPA-2023-Art40",
-        "article": "Article 40",
+        "rule_id": "NDPA-2023-Sec40",
+        "article": "Section 40",
         "title": "Audit Logging",
         "description": "Comprehensive audit logs must be maintained for all access to and processing of personal data.",
         "category": "security",
@@ -1062,8 +1063,8 @@ COMPLIANCE_RULES = [
         "severity_default": "high",
     },
     {
-        "rule_id": "NDPA-2023-Art42",
-        "article": "Article 42",
+        "rule_id": "NDPA-2023-Sec42",
+        "article": "Section 42",
         "title": "Breach Notification",
         "description": "Data breaches must be reported to NDPC within 72 hours of becoming aware of the breach.",
         "category": "security",
@@ -1074,8 +1075,8 @@ COMPLIANCE_RULES = [
 
     # NDPA 2023: Data Subject Rights
     {
-        "rule_id": "NDPA-2023-Art45",
-        "article": "Article 45",
+        "rule_id": "NDPA-2023-Sec45",
+        "article": "Section 45",
         "title": "Data Subject Access Requests",
         "description": "Data subjects have the right to access their personal data and receive a copy within 30 days.",
         "category": "data_subject_rights",
@@ -1084,8 +1085,8 @@ COMPLIANCE_RULES = [
         "severity_default": "high",
     },
     {
-        "rule_id": "NDPA-2023-Art46",
-        "article": "Article 46",
+        "rule_id": "NDPA-2023-Sec46",
+        "article": "Section 46",
         "title": "Right to Rectification",
         "description": "Data subjects have the right to have inaccurate personal data rectified.",
         "category": "data_subject_rights",
@@ -1094,8 +1095,8 @@ COMPLIANCE_RULES = [
         "severity_default": "medium",
     },
     {
-        "rule_id": "NDPA-2023-Art47",
-        "article": "Article 47",
+        "rule_id": "NDPA-2023-Sec47",
+        "article": "Section 47",
         "title": "Right to Erasure",
         "description": "Data subjects have the right to have their personal data erased (right to be forgotten).",
         "category": "data_subject_rights",
@@ -1106,8 +1107,8 @@ COMPLIANCE_RULES = [
 
     # Cross-Border (highest-value rule)
     {
-        "rule_id": "NDPA-2023-Art48",
-        "article": "Article 48",
+        "rule_id": "NDPA-2023-Sec48",
+        "article": "Section 48",
         "title": "Cross-Border Data Transfers",
         "description": "Personal data may only be transferred to countries with adequate data protection or appropriate safeguards.",
         "category": "cross_border",
@@ -1119,7 +1120,7 @@ COMPLIANCE_RULES = [
     # GAID 2025
     {
         "rule_id": "GAID-2025-Consent",
-        "article": "GAID Section 4",
+        "article": "GAID Article 17",
         "title": "GAID Consent Requirements",
         "description": "Granular, auditable consent records with timestamp, scope, and withdrawal capability.",
         "category": "gaid_2025",
@@ -1129,7 +1130,7 @@ COMPLIANCE_RULES = [
     },
     {
         "rule_id": "GAID-2025-Transparency",
-        "article": "GAID Section 6",
+        "article": "GAID Article 27",
         "title": "GAID Transparency Notice",
         "description": "Clear, accessible information about data processing must be provided to data subjects.",
         "category": "gaid_2025",
@@ -1139,7 +1140,7 @@ COMPLIANCE_RULES = [
     },
     {
         "rule_id": "GAID-2025-Portability",
-        "article": "GAID Section 8",
+        "article": "GAID Article 37",
         "title": "GAID Data Portability",
         "description": "Data subjects have the right to receive their data in a structured, machine-readable format.",
         "category": "gaid_2025",
