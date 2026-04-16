@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText,
@@ -21,6 +19,8 @@ import {
   Download,
   ArrowLeft,
   ArrowRight,
+  Shield,
+  Code
 } from "lucide-react";
 
 const findingSchema = z.object({
@@ -69,17 +69,17 @@ const mockFindings = [
 ];
 
 const severityConfig = {
-  critical: { icon: AlertCircle, color: "text-red-600", bg: "bg-red-50", border: "border-red-200" },
-  high: { icon: AlertTriangle, color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-200" },
-  medium: { icon: AlertTriangle, color: "text-yellow-600", bg: "bg-yellow-50", border: "border-yellow-200" },
-  low: { icon: Info, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
+  critical: { icon: AlertCircle, color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20" },
+  high: { icon: AlertTriangle, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20" },
+  medium: { icon: AlertTriangle, color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
+  low: { icon: Info, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
 };
 
 const statusColors: Record<string, string> = {
-  open: "bg-gray-100 text-gray-800",
-  in_review: "bg-yellow-100 text-yellow-800",
-  accepted: "bg-green-100 text-green-800",
-  resolved: "bg-blue-100 text-blue-800",
+  open: "bg-white/5 text-gray-400 border-white/10",
+  in_review: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+  accepted: "bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20",
+  resolved: "bg-green-500/10 text-green-400 border-green-500/20",
 };
 
 export default function DocumentStudioPage() {
@@ -106,23 +106,23 @@ export default function DocumentStudioPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Document Studio</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-3xl font-bold text-white tracking-tight">Document Studio</h1>
+          <p className="text-gray-400 mt-1">
             Review findings and approve AI-generated fixes
           </p>
         </div>
-        <div className="flex items-center gap-x-3">
-          <button className="flex items-center gap-x-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+        <div className="flex items-center gap-3">
+          <button className="flex items-center gap-x-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors px-4 py-2.5 text-sm font-medium text-gray-300">
             <Eye className="h-4 w-4" />
-            Preview Report
+            Preview
           </button>
-          <button className="flex items-center gap-x-2 rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500">
+          <button className="flex items-center gap-x-2 rounded-xl bg-brand-blue hover:bg-brand-blue/80 transition-shadow shadow-lg shadow-brand-blue/20 px-5 py-2.5 text-sm font-semibold text-white">
             <Download className="h-4 w-4" />
-            Generate CAR PDF
+            Export CAR PDF
           </button>
         </div>
       </div>
@@ -130,13 +130,19 @@ export default function DocumentStudioPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Findings List */}
         <div className="lg:col-span-1">
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="font-semibold text-gray-900">Findings ({mockFindings.length})</h3>
+          <div className="glass-card rounded-2xl overflow-hidden h-[calc(100vh-200px)] flex flex-col relative">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-brand-purple/10 rounded-full blur-[40px] pointer-events-none" />
+            <div className="p-5 border-b border-white/5 shrink-0 relative z-10">
+              <h3 className="font-semibold text-white flex items-center gap-2">
+                <Shield className="h-4 w-4 text-brand-cyan" />
+                Audit Findings ({mockFindings.length})
+              </h3>
             </div>
-            <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
+            <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10 pb-4">
               {mockFindings.map((finding, index) => {
                 const SeverityIcon = severityConfig[finding.severity as keyof typeof severityConfig].icon;
+                const isSelected = selectedFindingId === finding.id || (!selectedFindingId && index === 0);
+                
                 return (
                   <button
                     key={finding.id}
@@ -145,20 +151,27 @@ export default function DocumentStudioPage() {
                       setCurrentFindingIndex(index);
                       setEditMode(false);
                     }}
-                    className={`w-full text-left p-4 transition-colors hover:bg-gray-50 ${
-                      selectedFindingId === finding.id ? "bg-primary-50 border-l-4 border-l-primary-600" : ""
+                    className={`w-full text-left p-5 transition-all outline-none relative group border-b border-white/5 last:border-0 ${
+                      isSelected 
+                        ? "bg-brand-blue/10 border-l-4 border-l-brand-cyan shadow-[inset_0_0_20px_rgba(0,223,216,0.05)]" 
+                        : "hover:bg-white/5 border-l-4 border-l-transparent"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-x-2">
+                    <div className="flex items-start justify-between gap-x-3">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-x-2">
-                          <SeverityIcon className={`h-4 w-4 ${severityConfig[finding.severity as keyof typeof severityConfig].color}`} />
-                          <p className="text-sm font-semibold text-gray-900 truncate">{finding.rule}</p>
+                        <div className="flex items-center gap-x-2 mb-2">
+                          <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 border ${severityConfig[finding.severity as keyof typeof severityConfig].bg} ${severityConfig[finding.severity as keyof typeof severityConfig].color} ${severityConfig[finding.severity as keyof typeof severityConfig].border}`}>
+                              <SeverityIcon className="h-3 w-3 mr-1" />
+                              <span className="text-[10px] uppercase font-bold tracking-wider">{finding.severity}</span>
+                          </span>
+                          <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 border text-[10px] uppercase font-bold tracking-wider ${statusColors[finding.status]}`}>
+                            {finding.status.replace("_", " ")}
+                          </span>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1 truncate">{finding.title}</p>
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-2 ${statusColors[finding.status]}`}>
-                          {finding.status.replace("_", " ")}
-                        </span>
+                        <p className={`text-sm font-semibold truncate transition-colors ${isSelected ? "text-brand-cyan" : "text-white group-hover:text-gray-200"}`}>
+                          {finding.title}
+                        </p>
+                        <p className="text-xs font-mono text-gray-500 mt-1 truncate">{finding.rule}</p>
                       </div>
                     </div>
                   </button>
@@ -177,54 +190,69 @@ export default function DocumentStudioPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
+              className="h-full"
             >
-              <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="glass-card rounded-2xl p-8 relative overflow-hidden h-full flex flex-col">
+                {/* Background glow based on severity */}
+                 <div className={`absolute -right-20 -top-20 w-64 h-64 rounded-full blur-[100px] pointer-events-none opacity-20 ${severityConfig[selectedFinding.severity as keyof typeof severityConfig].color.replace('text-', 'bg-')}`} />
+
                 {/* Navigation */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-x-3">
+                <div className="flex items-center justify-between mb-8 relative z-10">
+                  <div className="flex items-center gap-x-2">
                     <button
                       onClick={handlePrevious}
                       disabled={currentFindingIndex === 0}
-                      className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       <ArrowLeft className="h-5 w-5" />
                     </button>
+                    <span className="text-sm font-medium text-gray-500 px-2">
+                      {currentFindingIndex + 1} of {mockFindings.length}
+                    </span>
                     <button
                       onClick={handleNext}
                       disabled={currentFindingIndex === mockFindings.length - 1}
-                      className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       <ArrowRight className="h-5 w-5" />
                     </button>
-                    <span className="text-sm text-gray-500">
-                      {currentFindingIndex + 1} / {mockFindings.length}
-                    </span>
                   </div>
                   <button
                     onClick={() => setEditMode(!editMode)}
-                    className="p-2 text-gray-400 hover:text-primary-600 rounded-md hover:bg-gray-100"
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors border text-sm font-medium ${
+                      editMode 
+                      ? "bg-gray-800 text-gray-300 border-white/10 hover:bg-gray-700" 
+                      : "bg-brand-blue/10 text-brand-blue border-brand-blue/20 hover:bg-brand-blue/20"
+                    }`}
                   >
-                    {editMode ? <X className="h-5 w-5" /> : <Edit className="h-5 w-5" />}
+                    {editMode ? <X className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
+                    {editMode ? "Cancel Editing" : "Edit Details"}
                   </button>
                 </div>
 
                 {/* Finding Header */}
-                <div className="mb-6">
-                  <div className="flex items-center gap-x-3 mb-2">
-                    <span className="text-lg font-bold text-gray-900">{selectedFinding.rule}</span>
-                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${statusColors[selectedFinding.status]}`}>
+                <div className="mb-8 relative z-10">
+                  <div className="flex items-center gap-x-3 mb-2 whitespace-nowrap overflow-x-auto custom-scrollbar pb-1">
+                    <span className={`inline-flex items-center rounded-md px-2 py-0.5 border text-xs font-bold uppercase tracking-wider ${severityConfig[selectedFinding.severity as keyof typeof severityConfig].color} ${severityConfig[selectedFinding.severity as keyof typeof severityConfig].border} ${severityConfig[selectedFinding.severity as keyof typeof severityConfig].bg}`}>
+                      {selectedFinding.severity}
+                    </span>
+                    <span className={`inline-flex items-center rounded-md px-2 py-0.5 border text-xs font-bold uppercase tracking-wider ${statusColors[selectedFinding.status]}`}>
                       {selectedFinding.status.replace("_", " ")}
                     </span>
+                    <span className="font-mono text-sm text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/5">{selectedFinding.rule}</span>
                   </div>
-                  <h2 className="text-xl font-semibold text-gray-900">{selectedFinding.title}</h2>
+                  <h2 className="text-2xl font-bold text-white mt-4 leading-tight">{selectedFinding.title}</h2>
                 </div>
 
                 {/* Content */}
-                <FindingDetailForm
-                  finding={selectedFinding}
-                  editMode={editMode}
-                  setEditMode={setEditMode}
-                />
+                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 relative z-10">
+                  <FindingDetailForm
+                    finding={selectedFinding}
+                    editMode={editMode}
+                    setEditMode={setEditMode}
+                    severity={selectedFinding.severity}
+                  />
+                </div>
               </div>
             </motion.div>
           </AnimatePresence>
@@ -234,7 +262,7 @@ export default function DocumentStudioPage() {
   );
 }
 
-function FindingDetailForm({ finding, editMode, setEditMode }: { finding: any; editMode: boolean; setEditMode: (v: boolean) => void }) {
+function FindingDetailForm({ finding, editMode, setEditMode, severity }: { finding: any; editMode: boolean; setEditMode: (v: boolean) => void; severity: string }) {
   const form = useForm<FindingFormData>({
     resolver: zodResolver(findingSchema),
     defaultValues: {
@@ -246,117 +274,135 @@ function FindingDetailForm({ finding, editMode, setEditMode }: { finding: any; e
 
   const onSubmit = async (data: FindingFormData) => {
     // TODO: Save to API
-    toast.success("Changes saved");
+    alert("Changes saved locally (Mock)");
     setEditMode(false);
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
       {/* Description */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">
+          <FileText className="h-4 w-4" /> Issue Description
+        </h3>
         {editMode ? (
-          <>
+          <div>
             <textarea
               {...form.register("description")}
-              rows={3}
-              className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-primary-500 focus:outline-none"
+              rows={4}
+              className="w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm text-gray-200 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue focus:outline-none transition-all resize-y"
             />
             {form.formState.errors.description && (
-              <p className="mt-1 text-sm text-red-600">{form.formState.errors.description.message}</p>
+              <p className="mt-2 text-xs text-red-400 flex items-center gap-1"><AlertCircle className="h-3 w-3"/> {form.formState.errors.description.message}</p>
             )}
-          </>
+          </div>
         ) : (
-          <p className="text-sm text-gray-600 bg-gray-50 rounded-md p-3">{finding.description}</p>
+          <p className="text-sm text-gray-300 bg-black/20 border border-white/5 rounded-xl p-5 leading-relaxed">{finding.description}</p>
         )}
       </div>
 
       {/* Recommendation */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Recommendation</label>
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">
+          <Check className="h-4 w-4" /> Recommendation
+        </h3>
         {editMode ? (
-          <>
+          <div>
             <textarea
               {...form.register("recommendation")}
               rows={3}
-              className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-primary-500 focus:outline-none"
+              className="w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm text-gray-200 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue focus:outline-none transition-all resize-y"
             />
             {form.formState.errors.recommendation && (
-              <p className="mt-1 text-sm text-red-600">{form.formState.errors.recommendation.message}</p>
+              <p className="mt-2 text-xs text-red-400 flex items-center gap-1"><AlertCircle className="h-3 w-3"/> {form.formState.errors.recommendation.message}</p>
             )}
-          </>
+          </div>
         ) : (
-          <p className="text-sm text-gray-600 bg-gray-50 rounded-md p-3">{finding.recommendation}</p>
+          <p className="text-sm text-gray-300 bg-black/20 border border-white/5 rounded-xl p-5 leading-relaxed">{finding.recommendation}</p>
         )}
       </div>
 
       {/* AI Suggestion */}
-      <div className={`rounded-lg border-2 ${severityConfig.medium.border} bg-blue-50 p-4`}>
-        <div className="flex items-center gap-x-2 mb-2">
-          <Lightbulb className="h-5 w-5 text-blue-600" />
-          <label className="text-sm font-semibold text-blue-800">AI Suggested Fix</label>
+      <div className="rounded-2xl border-2 border-brand-purple/30 bg-gradient-to-br from-brand-purple/10 to-transparent p-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+           <Lightbulb className="h-32 w-32" />
         </div>
+        <h3 className="flex items-center gap-2 text-sm font-bold text-brand-purple mb-4 uppercase tracking-wider relative z-10">
+          <Lightbulb className="h-5 w-5" /> AI Auto-Remediation Plan
+        </h3>
         {editMode ? (
-          <>
+          <div className="relative z-10">
             <textarea
               {...form.register("aiSuggestedFix")}
-              rows={3}
-              className="w-full rounded-md border border-blue-300 bg-white p-2 text-sm focus:border-blue-500 focus:outline-none"
+              rows={4}
+              className="w-full rounded-xl border border-brand-purple/40 bg-black/50 p-4 text-sm text-brand-purple/90 focus:border-brand-purple focus:ring-1 focus:ring-brand-purple focus:outline-none transition-all resize-y placeholder-brand-purple/30"
             />
             {form.formState.errors.aiSuggestedFix && (
-              <p className="mt-1 text-sm text-red-600">{form.formState.errors.aiSuggestedFix.message}</p>
+              <p className="mt-2 text-xs text-red-400 flex items-center gap-1"><AlertCircle className="h-3 w-3"/> {form.formState.errors.aiSuggestedFix.message}</p>
             )}
-          </>
+          </div>
         ) : (
-          <p className="text-sm text-blue-700">{finding.aiSuggestedFix}</p>
+          <p className="text-sm text-brand-purple/90 font-medium leading-relaxed relative z-10">{finding.aiSuggestedFix}</p>
         )}
       </div>
 
       {/* Evidence */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Evidence</label>
-        <pre className="text-xs bg-gray-900 text-green-400 rounded-md p-3 overflow-x-auto">
-          {JSON.stringify(finding.evidence, null, 2)}
-        </pre>
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">
+          <Code className="h-4 w-4" /> Technical Evidence
+        </h3>
+        <div className="rounded-xl border border-gray-800 bg-gray-950 overflow-hidden">
+          <div className="flex items-center px-4 py-2 bg-gray-900 border-b border-gray-800">
+             <span className="flex gap-1.5">
+               <div className="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
+               <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div>
+               <div className="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
+             </span>
+             <span className="ml-3 text-xs font-mono text-gray-500">payload.json</span>
+          </div>
+          <pre className="text-xs font-mono text-green-400/90 p-4 overflow-x-auto">
+            {JSON.stringify(finding.evidence, null, 2)}
+          </pre>
+        </div>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-x-3 pt-4 border-t border-gray-200">
+      <div className="pt-8 flex flex-wrap items-center gap-3">
         {editMode ? (
           <>
             <button
               type="submit"
-              className="flex items-center gap-x-2 rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500"
+              className="flex items-center gap-x-2 rounded-xl bg-green-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-green-400 shadow-lg shadow-green-500/20 transition-all"
             >
               <Save className="h-4 w-4" />
-              Save Changes
+              Save Modifications
             </button>
             <button
               type="button"
               onClick={() => setEditMode(false)}
-              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="rounded-xl border border-white/10 bg-transparent px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors"
             >
-              Cancel
+              Revert
             </button>
           </>
         ) : (
           <>
             <button
               type="button"
-              className="flex items-center gap-x-2 rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500"
+              className="flex items-center gap-x-2 rounded-xl bg-brand-cyan hover:bg-brand-cyan/80 px-6 py-2.5 text-sm font-bold text-gray-900 shadow-lg shadow-brand-cyan/20 transition-all"
             >
               <Check className="h-4 w-4" />
-              Accept Fix
+              Approve AI Fix
             </button>
             <button
               type="button"
-              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 px-6 py-2.5 text-sm font-medium text-white transition-colors"
             >
-              Mark as Resolved
+              Mark Resolved
             </button>
             <button
               type="button"
-              className="rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+              className="rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 px-6 py-2.5 text-sm font-medium text-red-400 transition-colors ml-auto sm:ml-0"
             >
               Accept Risk
             </button>
