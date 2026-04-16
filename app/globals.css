@@ -56,23 +56,45 @@
 
 @layer utilities {
   .glass-card {
-    @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.5)];
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.5);
   }
   .glass-panel {
-    @apply bg-[#0B0F19]/80 backdrop-blur-2xl border border-white/5;
+    background-color: rgba(11, 15, 25, 0.8);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-500;
+    background-image: linear-gradient(to right, #60a5fa, #22d3ee, #a855f7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
   .glow-border {
     position: relative;
   }
   .glow-border::before {
     content: "";
-    @apply absolute inset-0 -z-10 rounded-[inherit] bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 transition-opacity duration-500;
+    position: absolute;
+    inset: 0;
+    z-index: -10;
+    border-radius: inherit;
+    background-image: linear-gradient(to right, #3b82f6, #a855f7);
+    opacity: 0;
+    transition: opacity 0.5s ease;
     margin: -1px;
   }
   .glow-border:hover::before {
-    @apply opacity-30;
+    opacity: 0.3;
+  }
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+  .animation-delay-4000 {
+    animation-delay: 4s;
   }
 }
