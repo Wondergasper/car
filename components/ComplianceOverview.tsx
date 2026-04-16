@@ -68,44 +68,67 @@ export default function ComplianceOverview() {
   }, []);
 
   return (
-    <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-brand-blue/10 rounded-full blur-[80px] -z-10" />
-      <h3 className="text-xl font-bold text-white">Compliance Score Trend</h3>
-      <p className="text-sm text-gray-400 mt-1 mb-8">
+    <div className="glass-card rounded-xl sm:rounded-2xl p-6">
+      {/* Gradient Background */}
+      <div className="absolute top-0 right-0 w-48 sm:w-64 h-48 sm:h-64 bg-brand-blue/10 rounded-full blur-[80px] -z-10" aria-hidden="true" />
+      
+      {/* Header */}
+      <h3 className="text-xl sm:text-2xl font-bold text-white">Compliance Score Trend</h3>
+      <p className="text-xs sm:text-sm text-gray-400 mt-1 mb-6 sm:mb-8">
         Your overall compliance score over the last 6 months
       </p>
-      <div className="h-72">
+
+      {/* Chart Container */}
+      <div className="h-64 sm:h-72 w-full">
         {loading ? (
-          <div className="h-full rounded-xl bg-white/[0.02] animate-pulse" />
+          <div className="h-full rounded-xl bg-white/[0.02] animate-pulse" role="status" aria-label="Loading chart" />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
+            <LineChart 
+              data={data}
+              margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+            >
               <defs>
                 <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00dfd8" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#00dfd8" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-              <XAxis dataKey="month" stroke="#94a3b8" axisLine={false} tickLine={false} dy={10} />
-              <YAxis stroke="#94a3b8" domain={[0, 100]} axisLine={false} tickLine={false} dx={-10} />
+              <XAxis 
+                dataKey="month" 
+                stroke="#94a3b8" 
+                axisLine={false} 
+                tickLine={false} 
+                dy={10}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis 
+                stroke="#94a3b8" 
+                domain={[0, 100]} 
+                axisLine={false} 
+                tickLine={false} 
+                dx={-10}
+                tick={{ fontSize: 12 }}
+              />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "rgba(15, 23, 42, 0.9)",
+                  backgroundColor: "rgba(15, 23, 42, 0.95)",
                   backdropFilter: "blur(10px)",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(6, 182, 212, 0.3)",
                   borderRadius: "8px",
                   color: "#fff",
+                  padding: "12px",
                 }}
-                itemStyle={{ color: "#00dfd8", fontWeight: "bold" }}
+                itemStyle={{ color: "#06b6d4", fontWeight: "bold" }}
               />
               <Line
                 type="monotone"
                 dataKey="score"
-                stroke="#00dfd8"
+                stroke="#06b6d4"
                 strokeWidth={3}
-                dot={{ fill: "#030712", stroke: "#00dfd8", strokeWidth: 2, r: 4 }}
-                activeDot={{ fill: "#00dfd8", stroke: "#ffffff", strokeWidth: 2, r: 6 }}
+                dot={{ fill: "#0a0e1a", stroke: "#06b6d4", strokeWidth: 2, r: 4 }}
+                activeDot={{ fill: "#06b6d4", stroke: "#ffffff", strokeWidth: 2, r: 6 }}
               />
             </LineChart>
           </ResponsiveContainer>

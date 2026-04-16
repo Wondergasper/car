@@ -74,42 +74,46 @@ export default function DashboardPage() {
 
   return (
     <motion.div
-      className="space-y-8"
+      className="space-y-6 sm:space-y-8 pb-8"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-      <div className="flex justify-between items-end mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Overview</h1>
-          <p className="text-gray-400">Welcome back. Here is the latest state of your compliance.</p>
-        </div>
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 tracking-tight">Overview</h1>
+        <p className="text-gray-400 text-sm sm:text-base">Welcome back. Here is the latest state of your compliance audit system.</p>
       </div>
 
-      {/* Live Stats */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Compliance Score"
           value={stats.complianceScore}
           loading={!stats.loaded}
+          icon="chart"
         />
         <StatCard
           title="Active Connectors"
           value={String(stats.activeConnectors)}
           loading={!stats.loaded}
+          icon="plug"
         />
         <StatCard
           title="Total Findings"
           value={String(stats.openFindings)}
           loading={!stats.loaded}
+          icon="alert"
         />
         <StatCard
           title="Pending Audits"
           value={String(stats.pendingReports)}
           loading={!stats.loaded}
+          icon="clock"
         />
       </div>
 
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <motion.div variants={itemVariants} className="lg:col-span-2">
           <ComplianceOverview />
@@ -119,6 +123,7 @@ export default function DashboardPage() {
         </motion.div>
       </div>
 
+      {/* Connectors Section */}
       <motion.div variants={itemVariants}>
         <ConnectorsList />
       </motion.div>
@@ -130,10 +135,12 @@ function StatCard({
   title,
   value,
   loading,
+  icon,
 }: {
   title: string;
   value: string;
   loading?: boolean;
+  icon?: string;
 }) {
   return (
     <motion.div
@@ -141,15 +148,25 @@ function StatCard({
         hidden: { opacity: 0, scale: 0.95 },
         visible: { opacity: 1, scale: 1 },
       }}
-      className="glass-card p-6 rounded-2xl relative overflow-hidden group"
+      className="glass-card p-6 rounded-xl sm:rounded-2xl relative overflow-hidden group hover:shadow-lg transition-all duration-300 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-accent focus-within:ring-offset-background"
     >
-      <div className="absolute -right-10 -top-10 w-32 h-32 bg-gradient-to-br from-brand-blue/20 to-brand-purple/20 rounded-full blur-2xl group-hover:bg-brand-cyan/20 transition-colors duration-500" />
-      <p className="text-sm font-medium text-gray-400 relative z-10">{title}</p>
-      {loading ? (
-        <div className="mt-2 h-10 w-24 rounded bg-white/10 animate-pulse" />
-      ) : (
-        <p className="mt-2 text-4xl font-bold text-white tracking-tight relative z-10">{value}</p>
-      )}
+      {/* Gradient Background */}
+      <div className="absolute -right-10 -top-10 w-32 h-32 bg-gradient-to-br from-brand-blue/20 to-brand-purple/20 rounded-full blur-2xl group-hover:from-brand-cyan/20 group-hover:to-brand-blue/20 transition-all duration-500" aria-hidden="true" />
+      
+      {/* Card Content */}
+      <div className="relative z-10">
+        <p className="text-xs sm:text-sm font-semibold text-gray-400 uppercase tracking-wider">{title}</p>
+        
+        {loading ? (
+          <div className="mt-4 space-y-2">
+            <div className="h-8 sm:h-10 w-20 sm:w-24 rounded bg-white/10 animate-pulse" aria-busy="true" />
+          </div>
+        ) : (
+          <p className="mt-3 text-3xl sm:text-4xl font-bold text-white tracking-tight" role="status" aria-live="polite">
+            {value}
+          </p>
+        )}
+      </div>
     </motion.div>
   );
 }
