@@ -518,5 +518,4 @@ function ConnectorStep({
     </motion.form>
   );
 
-  );
 }
