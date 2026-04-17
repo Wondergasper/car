@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { User, Building, Mail, Shield, Save } from "lucide-react";
+import ApiKeysList from "@/components/ApiKeysList";
 
 export default function SettingsPage() {
   const [formData, setFormData] = useState({
@@ -120,6 +121,9 @@ export default function SettingsPage() {
             Save Changes
           </button>
         </div>
+
+        {/* API Keys */}
+        <ApiKeysList />
       </div>
     </div>
   );

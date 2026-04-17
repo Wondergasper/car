@@ -9,6 +9,7 @@ import {
   Shield,
   Settings,
   BookOpen,
+  Send,
 } from "lucide-react";
 
 const navigation = [
@@ -17,6 +18,7 @@ const navigation = [
   { name: "Audit Reports", href: "/dashboard/reports", icon: FileText },
   { name: "Compliance Rules", href: "/dashboard/rules", icon: Shield },
   { name: "Document Studio", href: "/dashboard/studio", icon: BookOpen },
+  { name: "Filing Portal", href: "/dashboard/filing", icon: Send },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 

@@ -63,6 +63,7 @@ export const auditsApi = {
   generate: (data?: { name?: string; audit_type?: string; scope?: object }) =>
     api.post("/audits/generate", data || {}),
   download: (id: string) => api.get(`/audits/${id}/download`),
+  submit: (id: string) => api.post(`/audits/${id}/submit`),
 };
 
 // Rules API
@@ -77,4 +78,13 @@ export const apiKeysApi = {
   revoke: (id: string, reason?: string) =>
     api.post(`/api-keys/${id}/revoke`, null, { params: { reason } }),
   get: (id: string) => api.get(`/api-keys/${id}`),
+};
+
+// Documents API
+export const documentsApi = {
+  list: (type?: string) => api.get("/documents", { params: { type } }),
+  get: (id: string) => api.get(`/documents/${id}`),
+  update: (id: string, data: any) => api.put(`/documents/${id}`, data),
+  delete: (id: string) => api.delete(`/documents/${id}`),
+  download: (id: string) => api.get(`/documents/${id}/download`),
 };
