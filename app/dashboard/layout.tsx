@@ -7,12 +7,12 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-transparent flex flex-col lg:flex-row">
       <Sidebar />
-      <div className="lg:pl-64">
+      <div className="flex-1 flex flex-col min-h-screen w-full">
         <Header />
-        <main className="py-6">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <main className="flex-1 py-6 px-4 sm:py-8 sm:px-6 lg:py-8 lg:px-8 w-full max-w-full lg:max-w-7xl mx-auto">
+          <div className="animate-fade-in">
             {children}
           </div>
         </main>

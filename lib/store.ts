@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { authApi } from "@/lib/api";
+import Cookies from "js-cookie";
 
 interface User {
   id: string;
@@ -23,10 +25,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email: string, password: string) => {
     try {
       const response = await authApi.login(email, password);
-      const data = response.data;
-      
-      localStorage.setItem("token", data.access_token);
-      set({ user: data.user, token: data.access_token, isAuthenticated: true });
+      const { access_token, user } = response.data;
+
+      localStorage.setItem("token", access_token);
+      // Set cookie so Next.js middleware can detect auth state
+      Cookies.set("token", access_token, { sameSite: "strict" });
+      set({ user, token: access_token, isAuthenticated: true });
     } catch (error) {
       throw error;
     }
@@ -34,6 +38,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: () => {
     localStorage.removeItem("token");
+    Cookies.remove("token"); // Clear cookie so middleware redirects correctly
     set({ user: null, token: null, isAuthenticated: false });
   },
 
