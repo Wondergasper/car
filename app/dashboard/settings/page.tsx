@@ -1,7 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Building, Mail, Shield, Save } from "lucide-react";
+import React from "react";
+import { User, Building, Mail, Shield, Save, Loader2, Check, Key, Copy, Plus } from "lucide-react";
+import { authApi, apiKeysApi } from "@/lib/api";
+
+interface UserProfile {
+  email: string;
+  role: string;
+  name?: string;
+}
+
+interface ApiKey {
+  id: string;
+  name: string;
+  key_preview: string;
+  created_at: string;
+  last_used_at?: string;
+  full_key?: string;
+}
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
