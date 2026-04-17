@@ -113,7 +113,7 @@ export default function OnboardingPage() {
             Welcome to CAR-Bot
           </h1>
           <p className="text-gray-400 text-lg">
-            Let's set up your organization for compliance in 3 easy steps
+            Let&apos;s set up your organization for compliance in 3 easy steps
           </p>
         </motion.div>
 

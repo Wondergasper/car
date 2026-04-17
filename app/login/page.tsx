@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, LogIn, CheckCircle2 } from "lucide-react";
@@ -8,7 +8,7 @@ import { useAuthStore } from "@/lib/store";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const login = useAuthStore((state) => state.login);
@@ -228,7 +228,7 @@ export default function LoginPage() {
         {/* Sign up link */}
         <div className="text-center">
           <p className="text-sm text-gray-400">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href="/register"
               className="font-semibold text-brand-cyan hover:text-brand-blue transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-brand-cyan rounded px-2"
@@ -254,5 +254,17 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[color:var(--background)] flex items-center justify-center">
+        <div className="h-8 w-8 border-4 border-brand-blue/30 border-t-brand-blue rounded-full animate-spin" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }
