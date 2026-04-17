@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Building, Mail, Shield, Save } from "lucide-react";
 
 export default function SettingsPage() {
