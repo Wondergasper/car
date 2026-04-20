@@ -144,7 +144,7 @@ function LoginContent() {
                 Password
               </label>
               <Link
-                href="/auth/forgot-password"
+                href="/forgot-password"
                 className="text-xs text-brand-cyan hover:text-brand-blue transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-brand-cyan rounded px-2"
               >
                 Forgot?

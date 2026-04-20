@@ -5,36 +5,30 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export const api = axios.create({
   baseURL: `${API_URL}/api`,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
-// Add token to requests
+// Attach JWT to every request
 api.interceptors.request.use((config) => {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Handle auth errors
+// Auto-redirect on 401
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
-      Cookies.remove("token"); // Clear cookie so middleware redirects correctly
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+      Cookies.remove("token");
+      if (typeof window !== "undefined") window.location.href = "/login";
     }
     return Promise.reject(error);
   }
 );
 
-// Auth API
+// ─── Auth ────────────────────────────────────────────────────────────────────
 export const authApi = {
   login: (email: string, password: string) =>
     api.post("/auth/login", { email, password }),
@@ -47,46 +41,104 @@ export const authApi = {
   getProfile: () => api.get("/auth/me"),
 };
 
-// Connectors API
+// ─── Connectors ──────────────────────────────────────────────────────────────
 export const connectorsApi = {
   list: () => api.get("/connectors"),
   get: (id: string) => api.get(`/connectors/${id}`),
-  create: (data: any) => api.post("/connectors", data),
-  update: (id: string, data: any) => api.put(`/connectors/${id}`, data),
+  create: (data: { name: string; connector_type_id: string; config: object; sync_interval?: number }) =>
+    api.post("/connectors", data),
+  update: (id: string, data: Partial<{ name: string; config: object; sync_enabled: boolean; sync_interval: number }>) =>
+    api.put(`/connectors/${id}`, data),
   delete: (id: string) => api.delete(`/connectors/${id}`),
   test: (id: string) => api.post(`/connectors/${id}/test`),
 };
 
-// Audits API
+// ─── Audits ──────────────────────────────────────────────────────────────────
 export const auditsApi = {
-  list: () => api.get("/audits"),
+  list: (skip = 0, limit = 50) => api.get("/audits", { params: { skip, limit } }),
   get: (id: string) => api.get(`/audits/${id}`),
-  getFindings: (id: string) => api.get(`/audits/${id}/findings`),
   generate: (data?: { name?: string; audit_type?: string; scope?: object }) =>
     api.post("/audits/generate", data || {}),
   download: (id: string) => api.get(`/audits/${id}/download`),
   submit: (id: string) => api.post(`/audits/${id}/submit`),
+  diff: (id: string) => api.get(`/audits/${id}/diff`),
+  remediation: (id: string) => api.get(`/audits/${id}/remediation`),
+
+  // Findings
+  getFindings: (id: string) => api.get(`/audits/${id}/findings`),
+  updateFinding: (
+    auditId: string,
+    findingId: string,
+    data: { status: string; resolution_notes?: string }
+  ) => api.patch(`/audits/${auditId}/findings/${findingId}`, data),
+  bulkUpdateFindings: (
+    auditId: string,
+    data: { ids: string[]; action: string; resolution_notes?: string }
+  ) => api.post(`/audits/${auditId}/findings/batch`, data),
+
+  // WebSocket progress (returns a WS URL, not an axios call)
+  progressWsUrl: (auditId: string): string => {
+    const wsBase = API_URL.replace(/^http/, "ws");
+    return `${wsBase}/api/audits/ws/${auditId}/progress`;
+  },
 };
 
-// Rules API
+// ─── Rules ───────────────────────────────────────────────────────────────────
 export const rulesApi = {
   list: () => api.get("/rules"),
 };
 
-// API Keys
+// ─── API Keys ────────────────────────────────────────────────────────────────
 export const apiKeysApi = {
   list: () => api.get("/api-keys"),
-  create: (data: any) => api.post("/api-keys", data),
+  create: (data: { name: string; permissions?: object; rate_limit?: number; expires_at?: string }) =>
+    api.post("/api-keys", data),
   revoke: (id: string, reason?: string) =>
     api.post(`/api-keys/${id}/revoke`, null, { params: { reason } }),
   get: (id: string) => api.get(`/api-keys/${id}`),
 };
 
-// Documents API
+// ─── Documents ───────────────────────────────────────────────────────────────
 export const documentsApi = {
   list: (type?: string) => api.get("/documents", { params: { type } }),
   get: (id: string) => api.get(`/documents/${id}`),
-  update: (id: string, data: any) => api.put(`/documents/${id}`, data),
+  update: (id: string, data: object) => api.put(`/documents/${id}`, data),
   delete: (id: string) => api.delete(`/documents/${id}`),
   download: (id: string) => api.get(`/documents/${id}/download`),
 };
+
+// ─── Team Management ─────────────────────────────────────────────────────────
+export const usersApi = {
+  list: () => api.get("/users"),
+  invite: (data: { email: string; full_name: string; role: string }) =>
+    api.post("/users/invite", data),
+  updateRole: (userId: string, role: string) =>
+    api.put(`/users/${userId}/role`, { role }),
+  deactivate: (userId: string) => api.delete(`/users/${userId}`),
+};
+
+// ─── AI Chat ─────────────────────────────────────────────────────────────────
+export const chatApi = {
+  send: (data: {
+    message: string;
+    audit_id?: string;
+    history?: { role: string; content: string }[];
+  }) => api.post("/chat", data),
+};
+
+// ─── Scheduled Audits ────────────────────────────────────────────────────────
+export const scheduledAuditsApi = {
+  list: () => api.get("/scheduled-audits"),
+  create: (data: { name: string; cron_expression: string }) =>
+    api.post("/scheduled-audits", data),
+  delete: (id: string) => api.delete(`/scheduled-audits/${id}`),
+};
+
+// ─── Notifications / Webhooks ────────────────────────────────────────────────
+export const notificationsApi = {
+  listWebhooks: () => api.get("/notifications/webhooks"),
+  createWebhook: (data: { name: string; url: string; events?: string[] }) =>
+    api.post("/notifications/webhooks", data),
+  deleteWebhook: (id: string) => api.delete(`/notifications/webhooks/${id}`),
+};
+

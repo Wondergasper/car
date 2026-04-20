@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import { auditsApi } from "@/lib/api";
 import { FileText, Download, Send, Clock, CheckCircle2, AlertCircle, FileCheck, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -68,154 +69,246 @@ export default function FilingPortalPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Filing Portal</h1>
-        <p className="text-gray-500 mt-1">
-          Review, download, and submit official Compliance Audit Reports (CAR) to the regulator.
-        </p>
-      </div>
+    <div className="space-y-8 max-w-7xl mx-auto pb-12 relative">
+      {/* Background glow effects */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-brand-cyan/5 rounded-full blur-[120px] -z-10" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-purple/5 rounded-full blur-[120px] -z-10" />
+
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-end justify-between gap-4 px-2"
+      >
+        <div>
+          <h1 className="text-4xl font-bold text-white tracking-tight">
+            Filing <span className="text-gradient">Portal</span>
+          </h1>
+          <p className="text-gray-400 mt-2 text-base font-medium max-w-xl leading-relaxed">
+            Officially transmit your verified compliance reports to the NDPC regulatory infrastructure via our secure encrypted gateway.
+          </p>
+        </div>
+        <div className="flex items-center gap-3 bg-white/[0.03] border border-white/10 px-4 py-2 rounded-2xl backdrop-blur-md shadow-lg">
+            <div className="h-2 w-2 rounded-full bg-brand-emerald animate-pulse" />
+            <span className="text-xs font-bold text-gray-300 uppercase tracking-widest leading-none">Gateway Active</span>
+        </div>
+      </motion.div>
 
       {isLoading ? (
-        <div className="flex justify-center py-24">
-          <Loader2 className="h-12 w-12 animate-spin text-primary-600" />
+        <div className="flex flex-col items-center justify-center py-32 space-y-4">
+          <div className="relative">
+            <div className="absolute inset-0 bg-brand-cyan/20 blur-xl rounded-full animate-pulse" />
+            <Loader2 className="h-16 w-16 animate-spin text-brand-cyan relative" />
+          </div>
+          <p className="text-gray-400 font-medium animate-pulse">Decrypting transmission channels...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Status Pipeline / Summary */}
-          <div className="lg:col-span-1 space-y-4">
-            <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-4">Submission Pipeline</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-x-2 text-gray-600">
-                    <FileText className="h-4 w-4" />
-                    <span className="text-sm">Ready to Submit</span>
+          <div className="lg:col-span-1 space-y-6">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="glass-card p-6 shadow-2xl relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-brand-blue/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <h3 className="font-bold text-white text-lg mb-6 flex items-center gap-2">
+                <Clock className="h-5 w-5 text-brand-cyan" />
+                Transmission Status
+              </h3>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all">
+                  <div className="flex items-center gap-x-3">
+                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                        <FileText className="h-4 w-4 text-amber-500" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-300">Pending Filing</span>
                   </div>
-                  <span className="font-semibold text-gray-900">{items.filter((i: any) => i.displayStatus === 'ready').length}</span>
+                  <span className="text-lg font-bold text-white pr-2">{items.filter((i: any) => i.displayStatus === 'ready').length}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-x-2 text-blue-600">
-                    <Clock className="h-4 w-4" />
-                    <span className="text-sm">Submitted</span>
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all">
+                  <div className="flex items-center gap-x-3 text-blue-600">
+                    <div className="h-8 w-8 rounded-lg bg-brand-blue/10 flex items-center justify-center">
+                        <Send className="h-4 w-4 text-brand-blue" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-300">Filed Reports</span>
                   </div>
-                  <span className="font-semibold text-gray-900">{items.filter((i: any) => i.displayStatus === 'submitted').length}</span>
+                  <span className="text-lg font-bold text-white pr-2">{items.filter((i: any) => i.displayStatus === 'submitted').length}</span>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-blue-50 p-5 rounded-lg border border-blue-100 shadow-sm">
-              <div className="flex gap-x-2 mb-2">
-                <AlertCircle className="h-5 w-5 text-blue-600" />
-                <h3 className="font-semibold text-blue-900">NDPC Requirements</h3>
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-brand-blue/5 p-6 rounded-3xl border border-brand-blue/20 shadow-xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-brand-blue/10 rounded-full blur-2xl" />
+              <div className="flex gap-x-3 mb-4">
+                <AlertCircle className="h-6 w-6 text-brand-cyan" />
+                <h3 className="font-bold text-brand-cyan text-lg">Requirements</h3>
               </div>
-              <p className="text-sm text-blue-800 leading-relaxed">
-                Ensure your compliance score is above 80% before submitting. Reports must be digitally signed by your designated Data Protection Officer (DPO).
-              </p>
-              <a href="#" className="mt-3 inline-flex items-center text-sm font-medium text-blue-700 hover:text-blue-800">
-                Read submission guidelines <ExternalLink className="ml-1 w-3 h-3" />
-              </a>
-            </div>
+              <ul className="text-sm text-gray-400 space-y-3 font-medium">
+                <li className="flex gap-2 leading-relaxed">
+                    <CheckCircle2 className="h-4 w-4 text-brand-emerald shrink-0 mt-0.5" />
+                    Compliance score &gt; 80%
+                </li>
+                <li className="flex gap-2 leading-relaxed">
+                    <CheckCircle2 className="h-4 w-4 text-brand-emerald shrink-0 mt-0.5" />
+                    DPO digital signature
+                </li>
+                <li className="flex gap-2 leading-relaxed">
+                    <CheckCircle2 className="h-4 w-4 text-brand-emerald shrink-0 mt-0.5" />
+                    Verified audit evidence
+                </li>
+              </ul>
+              <div className="mt-6">
+                <a href="#" className="inline-flex items-center text-xs font-bold text-brand-cyan uppercase tracking-widest hover:text-white transition-colors group">
+                    View Guidelines <ExternalLink className="ml-2 w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                </a>
+              </div>
+            </motion.div>
           </div>
 
           {/* Main Content Area */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-              {/* Tabs */}
-              <div className="border-b border-gray-200 px-4">
-                <nav className="-mb-px flex space-x-8">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-card shadow-2xl overflow-hidden min-h-[600px] flex flex-col relative"
+            >
+              {/* Tabs - Refined */}
+              <div className="px-8 pt-6 border-b border-white/5 bg-white/[0.01]">
+                <nav className="-mb-px flex space-x-10">
                   {['all', 'ready', 'submitted'].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={`${
-                        activeTab === tab
-                          ? 'border-primary-500 text-primary-600'
-                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                      } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium capitalize flex  items-center`}
+                      className={`
+                        relative py-6 px-1 text-sm font-bold capitalize transition-all overflow-visible
+                        ${activeTab === tab
+                          ? 'text-brand-cyan'
+                          : 'text-gray-500 hover:text-gray-300'
+                        }
+                      `}
                     >
-                      {tab}
-                      <span className="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">
-                        {tab === 'all' ? items.filter((i: any) => i.status === 'completed').length : items.filter((i: any) => i.displayStatus === tab).length}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        {tab}
+                        <span className={`
+                          py-0.5 px-2.5 rounded-full text-[10px] font-bold border
+                          ${activeTab === tab 
+                            ? 'bg-brand-cyan/10 border-brand-cyan/20 text-brand-cyan' 
+                            : 'bg-white/5 border-white/10 text-gray-500'}
+                        `}>
+                          {tab === 'all' ? items.filter((i: any) => i.status === 'completed').length : items.filter((i: any) => i.displayStatus === tab).length}
+                        </span>
+                      </div>
+                      {activeTab === tab && (
+                        <motion.div 
+                          layoutId="tabUnderline" 
+                          className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-blue to-brand-cyan rounded-t-full shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                        />
+                      )}
                     </button>
                   ))}
                 </nav>
               </div>
 
               {/* List */}
-              <div className="divide-y divide-gray-200">
+              <div className="flex-1 divide-y divide-white/5">
                 {filteredItems.map((item: any) => (
-                  <div key={item.id} className="p-6 hover:bg-gray-50 transition-colors">
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                  <motion.div 
+                    layout
+                    key={item.id} 
+                    className="p-8 hover:bg-white/[0.03] transition-all group relative overflow-hidden"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                       
-                      {/* Info */}
-                      <div className="flex gap-4">
-                        <div className={`p-3 rounded-lg flex items-center justify-center h-12 w-12 shrink-0 ${
-                          item.displayStatus === 'ready' ? 'bg-amber-100' : 'bg-blue-100'
+                      {/* Info section enhanced */}
+                      <div className="flex gap-6 items-center">
+                        <div className={`p-4 rounded-2xl flex items-center justify-center h-16 w-16 shrink-0 shadow-lg transition-transform group-hover:scale-110 ${
+                          item.displayStatus === 'ready' 
+                            ? 'bg-amber-500/10 border border-amber-500/20' 
+                            : 'bg-brand-blue/10 border border-brand-blue/20'
                         }`}>
-                          <FileCheck className={`h-6 w-6 ${
-                            item.displayStatus === 'ready' ? 'text-amber-600' : 'text-blue-600'
+                          <FileCheck className={`h-8 w-8 ${
+                            item.displayStatus === 'ready' ? 'text-amber-500' : 'text-brand-blue'
                           }`} />
                         </div>
                         
                         <div>
-                          <h4 className="text-lg font-medium text-gray-900">{item.name}</h4>
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-1 text-sm text-gray-500">
-                            <span>Completed: {new Date(item.completed_at).toLocaleDateString()}</span>
-                            <span className="flex items-center">
-                              Score: <span className={`ml-1 font-semibold ${item.compliance_score >= 80 ? 'text-green-600' : 'text-red-500'}`}>{item.compliance_score}%</span>
+                          <h4 className="text-xl font-bold text-white group-hover:text-brand-cyan transition-colors">{item.name}</h4>
+                          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-2 text-sm font-medium text-gray-500">
+                            <span className="flex items-center gap-1.5 border-r border-white/10 pr-6">
+                                <Clock className="h-3.5 w-3.5" />
+                                Completed {new Date(item.completed_at).toLocaleDateString()}
+                            </span>
+                            <span className="flex items-center gap-1.5 border-r border-white/10 pr-6">
+                                <Shield className="h-3.5 w-3.5" />
+                                Compliance Score <span className={`ml-1 font-bold text-lg ${item.compliance_score >= 80 ? 'text-brand-emerald' : 'text-status-error'}`}>{item.compliance_score}%</span>
                             </span>
                             {item.isSubmitted && (
-                                <span className="bg-gray-100 text-gray-700 px-2 rounded text-xs border border-gray-200">
-                                    Submitted: {new Date(item.scope.submitted_at).toLocaleDateString()}
+                                <span className="bg-brand-blue/10 text-brand-blue px-3 py-1 rounded-full text-xs font-bold border border-brand-blue/20 flex items-center gap-1.5">
+                                    <div className="h-1 w-1 rounded-full bg-brand-blue animate-pulse" />
+                                    Filed {new Date(item.scope.submitted_at).toLocaleDateString()}
                                 </span>
                             )}
                           </div>
                         </div>
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-2 md:self-center shrink-0">
+                      {/* Actions with better styling */}
+                      <div className="flex items-center gap-3 shrink-0">
                         <button 
                           onClick={() => handleDownload(item.id)}
                           disabled={downloadMutation.isPending}
-                          className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                          className="flex items-center gap-2 px-5 py-3 border border-white/10 rounded-2xl text-sm font-bold text-gray-300 bg-white/5 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50 active:scale-95 shadow-lg group/btn"
                         >
-                          {downloadMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                          Preview PDF
+                          {downloadMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 group-hover/btn:-translate-y-0.5 transition-transform" />}
+                          Preview CAR
                         </button>
                         
                         {item.displayStatus === 'ready' && (
                           <button 
                             onClick={() => handleSubmitToNDPC(item.id, item.name)}
                             disabled={submitMutation.isPending}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-500 shadow-sm disabled:opacity-50"
+                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-blue to-brand-cyan text-white rounded-2xl text-sm font-bold hover:shadow-[0_0_25px_rgba(6,182,212,0.3)] transition-all disabled:opacity-50 active:scale-95 shadow-xl group/submit"
                           >
-                            {submitMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                            Submit to NDPC
+                            {submitMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 group-submit:translate-x-0.5 group-submit:-translate-y-0.5 transition-transform" />}
+                            Transmit to NDPC
                           </button>
                         )}
                         
                         {item.displayStatus === 'submitted' && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                            <Clock className="w-3 h-3 mr-1" />
-                            Under Review
-                          </span>
+                          <div className="flex flex-col items-end">
+                            <span className="inline-flex items-center px-4 py-2 rounded-2xl text-xs font-bold bg-brand-blue/10 text-brand-blue border border-brand-blue/20 shadow-[0_0_15px_rgba(14,165,233,0.1)]">
+                                <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                                TRANSMITTING
+                            </span>
+                            <span className="text-[10px] font-medium text-gray-600 uppercase tracking-widest mt-1">Pending Approval</span>
+                          </div>
                         )}
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
                 
                 {filteredItems.length === 0 && (
-                  <div className="p-12 text-center text-gray-500">
-                    <FileText className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                    <p>No reports found in this category.</p>
-                  </div>
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="p-24 text-center"
+                  >
+                    <div className="relative inline-block mb-6">
+                        <div className="absolute inset-0 bg-white/5 blur-3xl rounded-full" />
+                        <FileText className="w-20 h-20 mx-auto text-gray-700 relative" />
+                    </div>
+                    <h3 className="text-lg font-bold text-white mb-2">Archive records empty</h3>
+                    <p className="text-gray-500 max-w-xs mx-auto">Perform a compliance audit to generate reports for official filing.</p>
+                  </motion.div>
                 )}
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       )}

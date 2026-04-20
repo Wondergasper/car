@@ -4,16 +4,20 @@
 
 @layer base {
   :root {
-    /* Primary Colors */
-    --background: #0a0e1a; /* Enhanced dark background */
-    --foreground: #f5f6f8; /* Improved text contrast */
-    --card: rgba(15, 22, 40, 0.7); /* Better card contrast */
-    --card-foreground: #e5e7eb; /* Improved text on card */
-    --popover: #132652; /* Better popover color */
+    /* Primary Colors in RGB for Tailwind Opacity Support */
+    --background-rgb: 10, 14, 26;
+    --foreground-rgb: 245, 246, 248;
+    --card-rgb: 15, 22, 40;
+    
+    --background: #0a0e1a;
+    --foreground: #f5f6f8;
+    --card: rgba(var(--card-rgb), 0.7);
+    --card-foreground: #e5e7eb;
+    --popover: #132652;
     --popover-foreground: #f1f5f9;
     
     /* Primary Actions */
-    --primary: 212 100% 50%; /* Enhanced Blue */
+    --primary: 212 100% 50%;
     --primary-foreground: #ffffff;
     --secondary: #1e293b;
     --secondary-foreground: #f8fafc;
@@ -21,18 +25,18 @@
     /* States and Variants */
     --muted: #475569;
     --muted-foreground: #cbd5e1;
-    --accent: #06b6d4; /* Improved cyan */
+    --accent: #06b6d4;
     --accent-foreground: #ffffff;
     --destructive: #dc2626;
     --destructive-foreground: #f8fafc;
     
     /* UI Elements */
-    --border: rgba(226, 232, 240, 0.15); /* Better border contrast */
+    --border: rgba(226, 232, 240, 0.15);
     --input: rgba(226, 232, 240, 0.08);
-    --ring: rgba(6, 182, 212, 0.5); /* Improved focus ring */
+    --ring: rgba(6, 182, 212, 0.5);
     --radius: 0.75rem;
 
-    /* Brand Colors */
+    /* Brand Colors (Hex is fine for fixed brand colors) */
     --brand-blue: #0ea5e9;
     --brand-cyan: #06b6d4;
     --brand-purple: #8b5cf6;
@@ -135,10 +139,40 @@
   }
   
   .text-gradient {
-    @apply bg-gradient-to-r from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-brand-blue via-brand-cyan to-brand-purple bg-clip-text text-transparent;
+  }
+
+  .text-gradient-purple {
+    @apply bg-gradient-to-r from-brand-purple to-brand-pink bg-clip-text text-transparent;
   }
   
   ::selection {
     background-color: rgba(6, 182, 212, 0.3);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }
