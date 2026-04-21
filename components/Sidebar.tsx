@@ -15,6 +15,9 @@ import {
   MessageSquare,
   CalendarClock,
   Bell,
+  Layers,
+  Search,
+  Cpu,
 } from "lucide-react";
 
 const navigation = [
@@ -26,8 +29,13 @@ const navigation = [
   { name: "Filing Portal", href: "/dashboard/filing", icon: Send },
 ];
 
-const secondaryNavigation = [
+const intelligenceNavigation = [
   { name: "AI Chat", href: "/dashboard/chat", icon: MessageSquare },
+  { name: "Clause Explorer", href: "/dashboard/clauses", icon: Search },
+  { name: "Frameworks", href: "/dashboard/frameworks", icon: Layers },
+];
+
+const secondaryNavigation = [
   { name: "Schedule Audits", href: "/dashboard/scheduled", icon: CalendarClock },
   { name: "Team", href: "/dashboard/team", icon: Users },
   { name: "Notifications", href: "/dashboard/notifications", icon: Bell },
@@ -109,7 +117,7 @@ export default function Sidebar() {
       {/* Search mock or some interactive element could go here */}
 
       {/* Navigation */}
-      <nav className="flex flex-1 flex-col px-4 mt-4 space-y-8">
+      <nav className="flex flex-1 flex-col px-4 mt-4 space-y-6">
         {/* Primary Nav */}
         <div>
           <p className="px-4 mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600/80">
@@ -117,6 +125,17 @@ export default function Sidebar() {
           </p>
           <ul role="list" className="flex flex-col gap-y-1.5">
             {navigation.map(renderNavItem)}
+          </ul>
+        </div>
+
+        {/* Intelligence Nav */}
+        <div>
+          <p className="px-4 mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600/80 flex items-center gap-1.5">
+            <Cpu className="w-3 h-3 text-brand-cyan" />
+            Intelligence
+          </p>
+          <ul role="list" className="flex flex-col gap-y-1.5">
+            {intelligenceNavigation.map(renderNavItem)}
           </ul>
         </div>
 
@@ -138,7 +157,7 @@ export default function Sidebar() {
             <p className="text-[10px] text-gray-600 uppercase tracking-widest font-bold">Status</p>
             <div className="flex items-center gap-1.5 mt-1">
               <div className="h-1.5 w-1.5 rounded-full bg-brand-emerald animate-pulse" />
-              <span className="text-xs font-medium text-gray-400">v1.2.0 Stable</span>
+              <span className="text-xs font-medium text-gray-400">v2.0.0 · RAG Ready</span>
             </div>
           </div>
           <div className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">

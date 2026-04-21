@@ -2,21 +2,39 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Send, Bot, User, Loader2, Sparkles, ChevronDown } from "lucide-react";
+import {
+  MessageSquare, Send, Bot, User, Loader2, Sparkles,
+  ChevronDown, BookOpen, Shield,
+} from "lucide-react";
 import { chatApi, auditsApi } from "@/lib/api";
+import { CitationCard } from "@/components/CitationCard";
+import { LLMStatusBadge } from "@/components/LLMStatusBadge";
+
+interface Citation {
+  source: string;
+  page: number;
+  article: string;
+  text: string;
+}
 
 interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  citations?: Citation[];
+  grounded?: boolean;
+  modelUsed?: string;
+  aiSafe?: boolean;
+  riskScore?: number;
 }
 
 const SUGGESTED_QUESTIONS = [
-  "What are my top 3 risks right now?",
-  "Which connector has the most violations?",
-  "Generate a summary email of the latest findings for my board.",
+  "What are my top 3 compliance risks right now?",
+  "What does NDPA 2023 Article 43 require for breach notification?",
+  "Do I need to appoint a DPO under the NDPA?",
   "How can I improve my compliance score?",
-  "What does NDPA 2023 Article 25 require?",
+  "What are the CAR filing requirements under GAID 2025?",
+  "Which CBN cybersecurity controls apply to my organisation?",
 ];
 
 export default function ChatPage() {
@@ -25,6 +43,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const [auditId, setAuditId] = useState<string | undefined>();
   const [audits, setAudits] = useState<any[]>([]);
+  const [useRag, setUseRag] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -47,11 +66,22 @@ export default function ChatPage() {
     setLoading(true);
     try {
       const history = messages.map((m) => ({ role: m.role, content: m.content }));
-      const res = await chatApi.send({ message: text, audit_id: auditId, history });
+      const res = await chatApi.send({
+        message: text,
+        audit_id: auditId,
+        history,
+        use_rag: useRag,
+      });
+      const data = res.data;
       const reply: Message = {
         role: "assistant",
-        content: res.data.reply,
+        content: data.reply,
         timestamp: new Date(),
+        citations: data.citations || [],
+        grounded: data.grounded || false,
+        modelUsed: data.model_used || "gemini-1.5-flash",
+        aiSafe: data.ai_safe !== false,
+        riskScore: data.risk_score || 0,
       };
       setMessages((prev) => [...prev, reply]);
     } catch (e: any) {
@@ -68,7 +98,7 @@ export default function ChatPage() {
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col max-w-5xl mx-auto relative">
-      {/* Decorative background glows */}
+      {/* Background glows */}
       <div className="absolute -top-20 -left-20 w-64 h-64 bg-brand-purple/10 rounded-full blur-[100px] -z-10" />
       <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-brand-cyan/10 rounded-full blur-[100px] -z-10" />
 
@@ -76,7 +106,7 @@ export default function ChatPage() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8 flex items-end justify-between px-2"
+        className="mb-6 flex items-end justify-between px-2"
       >
         <div>
           <div className="flex items-center gap-3 mb-2">
@@ -87,10 +117,25 @@ export default function ChatPage() {
               Compliance <span className="text-gradient">Intelligence</span>
             </h1>
           </div>
-          <p className="text-gray-400 text-sm font-medium ml-1">Powered by Google Gemini 1.5 Pro • Scoped to your private data</p>
+          <div className="flex items-center gap-3 ml-1">
+            <p className="text-gray-400 text-sm font-medium">
+              Powered by RAG · Gemini · Mistral · Llama 3
+            </p>
+            {/* RAG toggle */}
+            <button
+              onClick={() => setUseRag((v) => !v)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold transition-all ${
+                useRag
+                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                  : "bg-white/5 border-white/10 text-gray-500"
+              }`}
+            >
+              <BookOpen className="w-3 h-3" />
+              {useRag ? "RAG On" : "RAG Off"}
+            </button>
+          </div>
         </div>
 
-        {/* Audit selector - Refined */}
         {audits.length > 0 && (
           <div className="relative group">
             <div className="absolute inset-0 bg-brand-cyan/20 blur-md rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -105,15 +150,15 @@ export default function ChatPage() {
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none group-hover:text-white transition-colors" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
         )}
       </motion.div>
 
-      {/* Chat Window - Premium styling */}
+      {/* Chat Window */}
       <div className="flex-1 glass-card rounded-3xl flex flex-col overflow-hidden border border-white/10 shadow-2xl bg-white/[0.02] backdrop-blur-xl relative">
         <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
-          {/* Welcome / suggestions */}
+          {/* Welcome state */}
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full py-12 text-center max-w-2xl mx-auto">
               <div className="relative mb-6">
@@ -123,11 +168,14 @@ export default function ChatPage() {
                 </div>
               </div>
               <h2 className="text-2xl font-bold text-white mb-3">How can I help with your compliance?</h2>
-              <p className="text-gray-400 text-sm mb-10 leading-relaxed">
-                I have access to your connected data sources and audit history. Ask me to analyze risks, summarize findings, or explain specific regulations.
+              <p className="text-gray-400 text-sm mb-2 leading-relaxed">
+                Responses are grounded in official regulatory text from NDPA 2023 and GAID 2025.
               </p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+              <div className="flex items-center gap-1.5 mb-8">
+                <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-xs text-emerald-400 font-medium">RAG-grounded · Article citations included</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 {SUGGESTED_QUESTIONS.map((q) => (
                   <button
                     key={q}
@@ -136,8 +184,8 @@ export default function ChatPage() {
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex items-start gap-3">
-                        <span className="text-brand-cyan font-bold mt-0.5">→</span>
-                        <span>{q}</span>
+                      <span className="text-brand-cyan font-bold mt-0.5">→</span>
+                      <span>{q}</span>
                     </div>
                   </button>
                 ))}
@@ -161,22 +209,43 @@ export default function ChatPage() {
                 }`}>
                   {msg.role === "user"
                     ? <User className="h-5 w-5 text-white" />
-                    : <Bot className="h-5 w-5 text-brand-cyan" />
-                  }
+                    : <Bot className="h-5 w-5 text-brand-cyan" />}
                 </div>
-                <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-5 py-4 text-sm leading-relaxed shadow-xl relative group ${
-                  msg.role === "user"
-                    ? "bg-brand-blue/10 text-white border border-brand-blue/30 rounded-tr-sm"
-                    : "bg-white/[0.04] text-gray-200 border border-white/10 rounded-tl-sm backdrop-blur-md"
-                }`}>
-                  <div className="prose prose-invert max-w-none">
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
-                  </div>
-                  <div className={`text-[10px] uppercase font-bold tracking-widest mt-3 opacity-40 group-hover:opacity-100 transition-opacity ${
-                    msg.role === "user" ? "text-right" : "text-left"
+
+                <div className={`max-w-[85%] sm:max-w-[75%] ${msg.role === "user" ? "items-end" : "items-start"} flex flex-col`}>
+                  <div className={`rounded-2xl px-5 py-4 text-sm leading-relaxed shadow-xl relative group ${
+                    msg.role === "user"
+                      ? "bg-brand-blue/10 text-white border border-brand-blue/30 rounded-tr-sm"
+                      : "bg-white/[0.04] text-gray-200 border border-white/10 rounded-tl-sm backdrop-blur-md"
                   }`}>
-                    {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    <div className={`text-[10px] uppercase font-bold tracking-widest mt-3 opacity-40 group-hover:opacity-100 transition-opacity ${
+                      msg.role === "user" ? "text-right" : "text-left"
+                    }`}>
+                      {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </div>
                   </div>
+
+                  {/* Citations and LLM badge for assistant messages */}
+                  {msg.role === "assistant" && (
+                    <div className="w-full mt-1 px-1">
+                      {msg.modelUsed && (
+                        <LLMStatusBadge
+                          modelUsed={msg.modelUsed}
+                          aiSafe={msg.aiSafe}
+                          riskScore={msg.riskScore}
+                          grounded={msg.grounded}
+                        />
+                      )}
+                      {msg.citations && msg.citations.length > 0 && (
+                        <CitationCard
+                          citations={msg.citations}
+                          grounded={msg.grounded || false}
+                          modelUsed={msg.modelUsed}
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -188,17 +257,22 @@ export default function ChatPage() {
               <div className="h-10 w-10 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center flex-shrink-0">
                 <Bot className="h-5 w-5 text-brand-cyan animate-pulse" />
               </div>
-              <div className="bg-white/[0.04] border border-white/10 rounded-2xl rounded-tl-sm px-6 py-4 flex items-center gap-1.5 shadow-lg backdrop-blur-md">
-                <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce [animation-delay:0ms]" />
-                <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce [animation-delay:150ms]" />
-                <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce [animation-delay:300ms]" />
+              <div className="bg-white/[0.04] border border-white/10 rounded-2xl rounded-tl-sm px-6 py-4 flex items-center gap-3 shadow-lg backdrop-blur-md">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce [animation-delay:0ms]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce [animation-delay:150ms]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce [animation-delay:300ms]" />
+                </div>
+                {useRag && (
+                  <span className="text-xs text-gray-500">Retrieving regulatory clauses…</span>
+                )}
               </div>
             </motion.div>
           )}
           <div ref={bottomRef} className="h-4" />
         </div>
 
-        {/* Input Bar - Premium touch */}
+        {/* Input Bar */}
         <div className="border-t border-white/10 p-6 bg-black/20 backdrop-blur-xl">
           <form
             onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
@@ -208,7 +282,7 @@ export default function ChatPage() {
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Message CAR-Bot assistant…"
+              placeholder={useRag ? "Ask about a regulation or your compliance posture…" : "Message CAR-Bot assistant…"}
               disabled={loading}
               className="flex-1 bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-cyan/30 focus:bg-white/[0.05] transition-all disabled:opacity-50 shadow-inner"
             />
@@ -221,7 +295,7 @@ export default function ChatPage() {
             </button>
           </form>
           <p className="text-center text-[10px] text-gray-600 mt-4 font-medium uppercase tracking-[0.2em]">
-            Responses may vary based on data availability
+            {useRag ? "Grounded in NDPA 2023 · GAID 2025 · CBN · NCC" : "Responses may vary based on data availability"}
           </p>
         </div>
       </div>

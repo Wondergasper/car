@@ -123,7 +123,24 @@ export const chatApi = {
     message: string;
     audit_id?: string;
     history?: { role: string; content: string }[];
+    use_rag?: boolean;
   }) => api.post("/chat", data),
+};
+
+// ─── RAG / Clause Search ──────────────────────────────────────────────────────
+export const ragApi = {
+  status: () => api.get("/rag/status"),
+  search: (data: { query: string; k?: number; framework?: string | null }) =>
+    api.post("/rag/search", data),
+  reindex: () => api.post("/rag/index"),
+};
+
+// ─── Frameworks ──────────────────────────────────────────────────────────────
+export const frameworksApi = {
+  list: () => api.get("/frameworks/"),
+  get: (id: string) => api.get(`/frameworks/${id}`),
+  crosswalk: (fromFw: string, toFw: string) =>
+    api.get("/frameworks/crosswalk/map", { params: { from_fw: fromFw, to_fw: toFw } }),
 };
 
 // ─── Scheduled Audits ────────────────────────────────────────────────────────

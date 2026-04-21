@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { auditsApi } from "@/lib/api";
-import { FileText, Download, Send, Clock, CheckCircle2, AlertCircle, FileCheck, ExternalLink, Loader2 } from "lucide-react";
+import { FileText, Download, Send, Clock, CheckCircle2, AlertCircle, FileCheck, ExternalLink, Loader2, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 export default function FilingPortalPage() {
