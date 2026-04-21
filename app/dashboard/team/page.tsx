@@ -97,7 +97,7 @@ export default function TeamPage() {
             </div>
             Team Management
           </h1>
-          <p className="text-gray-400 mt-1 text-sm">Invite and manage your organization's team members</p>
+          <p className="text-gray-400 mt-1 text-sm">Invite and manage your organization&apos;s team members</p>
         </div>
         <button
           onClick={() => setShowInvite(true)}
