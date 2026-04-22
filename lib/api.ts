@@ -60,11 +60,11 @@ export const authApi = {
 
 // ─── Connectors ──────────────────────────────────────────────────────────────
 export const connectorsApi = {
-  list: () => api.get("/connectors"),
+  list: () => api.get("/connectors/"),
   listTypes: () => api.get("/connectors/types"),
   get: (id: string) => api.get(`/connectors/${id}`),
   create: (data: { name: string; connector_type_id: string; config: object; sync_interval?: number }) =>
-    api.post("/connectors", data),
+    api.post("/connectors/", data),
   update: (id: string, data: Partial<{ name: string; config: object; sync_enabled: boolean; sync_interval: number }>) =>
     api.put(`/connectors/${id}`, data),
   delete: (id: string) => api.delete(`/connectors/${id}`),
