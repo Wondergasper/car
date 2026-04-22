@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, LogIn, CheckCircle2 } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
@@ -9,7 +9,6 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 function LoginContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const login = useAuthStore((state) => state.login);
   
@@ -40,7 +39,7 @@ function LoginContent() {
 
       const redirect = searchParams?.get("redirect") || "/dashboard";
       toast.success("Welcome back!");
-      router.push(redirect);
+      window.location.assign(redirect);
     } catch (err: any) {
       const msg = err?.response?.data?.detail || "Invalid email or password";
       setError(msg);

@@ -4,7 +4,7 @@ echo CAR-Bot - Starting Backend Server
 echo ===================================
 echo.
 
-cd backend
+cd .."\car backend"
 
 REM Check if Python is installed
 python --version >nul 2>&1

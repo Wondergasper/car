@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -483,9 +484,9 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
 
       <p className="text-center text-xs text-gray-600">
         Already set up?{" "}
-        <a href="/dashboard" className="text-brand-cyan hover:underline">
+        <Link href="/dashboard" className="text-brand-cyan hover:underline">
           Go to dashboard
-        </a>
+        </Link>
       </p>
     </motion.div>
   );

@@ -1,12 +1,19 @@
 "use client";
 
 import { Bell, LogOut, CheckCircle2, Menu } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useAuthStore, useUIStore } from "@/lib/store";
 
 export default function Header() {
+  const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
   const { sidebarOpen, toggleSidebar } = useUIStore();
+
+  const handleLogout = () => {
+    logout();
+    router.replace("/login");
+  };
 
   return (
     <>
@@ -53,7 +60,7 @@ export default function Header() {
 
             {/* Logout Button - Refined */}
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="group flex items-center gap-x-2 px-4 py-2 rounded-xl text-sm font-semibold text-gray-400 hover:text-white bg-white/[0.03] hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 transition-all focus-visible:ring-2 focus-visible:ring-accent ml-2"
               aria-label="Logout"
               title="Logout"

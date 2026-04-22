@@ -9,6 +9,12 @@ backend/.env
 
 # Testing
 /coverage
+tests/
+test/
+__tests__/
+__mocks__/
+*.test.*
+*.spec.*
 
 # Next.js
 /.next/
