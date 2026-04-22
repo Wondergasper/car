@@ -6,7 +6,7 @@ import ComplianceOverview from "@/components/ComplianceOverview";
 import ConnectorsList from "@/components/ConnectorsList";
 import RecentAudits from "@/components/RecentAudits";
 import { dashboardApi } from "@/lib/api";
-import { Shield, Database, AlertCircle, Clock } from "lucide-react";
+import { Shield, Database, AlertCircle, Clock, FileSearch, TriangleAlert } from "lucide-react";
 
 export default function DashboardPage() {
   const { data: stats, isLoading } = useQuery({
@@ -46,7 +46,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard
           title="Compliance Score"
           value={stats?.compliance_score !== null ? `${stats?.compliance_score}%` : "—"}
@@ -74,6 +74,20 @@ export default function DashboardPage() {
           loading={isLoading}
           icon={Clock}
           color="text-brand-blue"
+        />
+        <StatCard
+          title="Analyzed Docs"
+          value={String(stats?.analyzed_documents ?? 0)}
+          loading={isLoading}
+          icon={FileSearch}
+          color="text-brand-cyan"
+        />
+        <StatCard
+          title="High-Risk Docs"
+          value={String(stats?.high_risk_documents ?? 0)}
+          loading={isLoading}
+          icon={TriangleAlert}
+          color="text-status-error"
         />
       </div>
 

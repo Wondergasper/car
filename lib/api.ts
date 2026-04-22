@@ -12,6 +12,14 @@ export const api = axios.create({
 
 // Attach JWT to every request
 api.interceptors.request.use((config) => {
+  if (typeof FormData !== "undefined" && config.data instanceof FormData && config.headers) {
+    if ("setContentType" in config.headers && typeof config.headers.setContentType === "function") {
+      config.headers.setContentType(false);
+    } else {
+      delete config.headers["Content-Type"];
+    }
+  }
+
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
@@ -96,9 +104,7 @@ export const auditsApi = {
 
   // File Upload Demo Route
   uploadData: (formData: FormData) => 
-    api.post("/audits/upload-data", formData, {
-      headers: { "Content-Type": "multipart/form-data" }
-    }),
+    api.post("/audits/upload-data", formData),
 
   // WebSocket progress (returns a WS URL, not an axios call)
   progressWsUrl: (auditId: string): string => {
@@ -127,6 +133,7 @@ export const documentsApi = {
   list: (type?: string) => api.get("/documents", { params: { type } }),
   get: (id: string) => api.get(`/documents/${id}`),
   upload: (formData: FormData) => api.post("/documents", formData),
+  analyze: (id: string, formData: FormData) => api.post(`/documents/${id}/analyze`, formData),
   update: (id: string, data: object) => api.put(`/documents/${id}`, data),
   delete: (id: string) => api.delete(`/documents/${id}`),
   download: (id: string) => api.get(`/documents/${id}/download`, { responseType: "blob" }),
