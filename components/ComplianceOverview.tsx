@@ -126,8 +126,7 @@ export default function ComplianceOverview() {
                   fill: "#06b6d4", 
                   stroke: "#ffffff", 
                   strokeWidth: 2, 
-                  r: 7,
-                  boxShadow: "0 0 20px rgba(6, 182, 212, 0.5)"
+                  r: 7
                 }}
               />
             </LineChart>
