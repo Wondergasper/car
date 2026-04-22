@@ -34,6 +34,13 @@ interface Audit {
   medium_count: number;
   low_count: number;
   compliance_score: number | null;
+  scope?: {
+    submitted_to_ndpc?: boolean;
+    submitted_at?: string;
+    ndpc_receipt_id?: string;
+  } | null;
+  report_storage_key?: string | null;
+  report_generated_at?: string | null;
   created_at: string;
   completed_at: string | null;
 }
@@ -92,7 +99,7 @@ export default function FilingPortalPage() {
 
   const handleGenerateReport = async (auditId: string) => {
     try {
-      console.log("Generating report for audit:", auditId);
+      console.log("Report generation is not available yet for audit:", auditId);
     } catch (error) {
       console.error("Failed to generate report:", error);
     }
@@ -276,10 +283,10 @@ function AuditFilingCard({
 }) {
   const score = audit.compliance_score || 0;
   const scoreColor = score >= 80 ? "text-green-400" : score >= 60 ? "text-yellow-400" : "text-red-400";
+  const hasReport = Boolean(audit.report_storage_key);
 
-  // Derive filing status from audit status (no report_storage_key on frontend)
   const submissionStatus: FilingRecord["submission_status"] =
-    audit.status === "completed" ? "ready" : "draft";
+    audit.scope?.submitted_to_ndpc ? "submitted" : hasReport ? "ready" : "draft";
   const SubIcon = submissionConfig[submissionStatus].icon;
 
   return (
@@ -329,7 +336,7 @@ function AuditFilingCard({
             >
               <Eye className="h-5 w-5" />
             </button>
-            {audit.status === "completed" ? (
+            {hasReport ? (
               <button
                 onClick={() => onDownload(audit.id)}
                 className="flex items-center gap-x-2 rounded-xl bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-brand-blue/80 shadow-lg shadow-brand-blue/20 transition-all"
@@ -340,10 +347,11 @@ function AuditFilingCard({
             ) : (
               <button
                 onClick={() => onGenerateReport(audit.id)}
-                className="flex items-center gap-x-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-colors"
+                disabled
+                className="flex items-center gap-x-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-gray-500 transition-colors disabled:cursor-not-allowed"
               >
                 <FileText className="h-4 w-4" />
-                Generate
+                PDF Pending
               </button>
             )}
           </div>
@@ -363,6 +371,7 @@ function ReportPreviewModal({
   onDownload: () => void;
 }) {
   const score = audit.compliance_score || 0;
+  const hasReport = Boolean(audit.report_storage_key);
 
   return (
     <motion.div
@@ -455,10 +464,11 @@ function ReportPreviewModal({
           </button>
           <button
             onClick={onDownload}
-            className="flex items-center gap-x-2 rounded-xl bg-brand-cyan px-5 py-2.5 text-sm font-semibold text-gray-900 hover:bg-brand-cyan/80 shadow-lg shadow-brand-cyan/20 transition-all"
+            disabled={!hasReport}
+            className="flex items-center gap-x-2 rounded-xl bg-brand-cyan px-5 py-2.5 text-sm font-semibold text-gray-900 hover:bg-brand-cyan/80 shadow-lg shadow-brand-cyan/20 transition-all disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-gray-500 disabled:shadow-none"
           >
             <Download className="h-4 w-4" />
-            Download PDF
+            {hasReport ? "Download PDF" : "PDF Pending"}
           </button>
         </div>
       </motion.div>

@@ -58,6 +58,7 @@ export default function FilingPortalPage() {
   const items = audits.map((a: any) => ({
     ...a,
     isSubmitted: a.scope?.submitted_to_ndpc === true,
+    hasReport: Boolean(a.report_storage_key),
     displayStatus: a.scope?.submitted_to_ndpc ? "submitted" : (a.status === "completed" ? "ready" : "draft")
   }));
 
@@ -261,11 +262,11 @@ export default function FilingPortalPage() {
                       <div className="flex items-center gap-3 shrink-0">
                         <button 
                           onClick={() => handleDownload(item.id)}
-                          disabled={downloadMutation.isPending}
-                          className="flex items-center gap-2 px-5 py-3 border border-white/10 rounded-2xl text-sm font-bold text-gray-300 bg-white/5 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50 active:scale-95 shadow-lg group/btn"
+                          disabled={downloadMutation.isPending || !item.hasReport}
+                          className="flex items-center gap-2 px-5 py-3 border border-white/10 rounded-2xl text-sm font-bold text-gray-300 bg-white/5 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 shadow-lg group/btn"
                         >
                           {downloadMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 group-hover/btn:-translate-y-0.5 transition-transform" />}
-                          Preview CAR
+                          {item.hasReport ? "Preview CAR" : "CAR Pending"}
                         </button>
                         
                         {item.displayStatus === 'ready' && (
@@ -315,4 +316,3 @@ export default function FilingPortalPage() {
     </div>
   );
 }
-
