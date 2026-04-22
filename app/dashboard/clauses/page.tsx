@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search, BookOpen, FileText, ChevronRight, Loader2,
+  Search, BookOpen, ChevronRight, Loader2,
   AlertCircle, Sparkles, Filter, X,
 } from "lucide-react";
 import { ragApi } from "@/lib/api";
@@ -54,7 +54,6 @@ const SAMPLE_QUERIES = [
   "CAR filing deadline and format",
 ];
 
-/** Indexed corpus today: NDPA 2023 + GAID 2025 PDFs only (see RAG engine). */
 const FRAMEWORKS = ["All", "NDPA 2023", "GAID 2025"];
 
 export default function ClausesPage() {
@@ -67,7 +66,6 @@ export default function ClausesPage() {
   const [ragReady, setRagReady] = useState<boolean | null>(null);
   const [ragChunks, setRagChunks] = useState(0);
 
-  // Check RAG status on mount
   useEffect(() => {
     ragApi.status()
       .then((r) => {
@@ -91,7 +89,6 @@ export default function ClausesPage() {
         framework: selectedFramework === "All" ? null : selectedFramework,
       });
       setResults(res.data.results || []);
-
     } catch (e: any) {
       setError(e?.response?.data?.detail || "Search failed. Please try again.");
     } finally {
@@ -106,7 +103,6 @@ export default function ClausesPage() {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
-      {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-2">
           <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-brand-purple to-brand-cyan flex items-center justify-center shadow-lg shadow-brand-purple/20">
@@ -120,25 +116,23 @@ export default function ClausesPage() {
           Semantic search across NDPA 2023 and GAID 2025 (indexed regulatory PDFs). CBN/NCC can be added to the corpus later.
         </p>
 
-        {/* RAG status pill */}
         <div className="flex items-center gap-2 mt-3 ml-1">
           {ragReady === null ? (
-            <span className="text-xs text-gray-600">Checking index…</span>
+            <span className="text-xs text-gray-600">Checking index...</span>
           ) : ragReady ? (
             <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              {ragChunks.toLocaleString()} clauses indexed · Ready
+              {ragChunks.toLocaleString()} clauses indexed | Ready
             </span>
           ) : (
             <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full">
               <AlertCircle className="w-3.5 h-3.5" />
-              RAG not ready — install sentence-transformers chromadb pypdf
+              RAG not ready - install sentence-transformers chromadb pypdf
             </span>
           )}
         </div>
       </motion.div>
 
-      {/* Search bar */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -152,7 +146,7 @@ export default function ClausesPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && search()}
-              placeholder="Search for any regulatory requirement…"
+              placeholder="Search for any regulatory requirement..."
               className="w-full pl-11 pr-4 py-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all text-sm"
             />
             {query && (
@@ -174,7 +168,6 @@ export default function ClausesPage() {
           </button>
         </div>
 
-        {/* Framework filter */}
         <div className="flex items-center gap-2 flex-wrap">
           <Filter className="w-3.5 h-3.5 text-gray-500" />
           {FRAMEWORKS.map((fw) => (
@@ -192,7 +185,6 @@ export default function ClausesPage() {
           ))}
         </div>
 
-        {/* Sample queries */}
         {results.length === 0 && !loading && (
           <div className="flex flex-wrap gap-2 pt-1">
             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider py-1">Quick Search /</span>
@@ -209,7 +201,6 @@ export default function ClausesPage() {
         )}
       </motion.div>
 
-      {/* Error */}
       {error && (
         <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
           <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
@@ -217,7 +208,6 @@ export default function ClausesPage() {
         </div>
       )}
 
-      {/* Results */}
       <AnimatePresence>
         {filteredResults.length > 0 && (
           <motion.div
@@ -245,13 +235,11 @@ export default function ClausesPage() {
                 >
                   <div className="p-5 flex items-start justify-between gap-4">
                     <div className="flex items-start gap-4 min-w-0">
-                      {/* Rank badge */}
                       <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-gray-400">
                         {r.relevance_rank}
                       </div>
 
                       <div className="min-w-0">
-                        {/* Source + Article */}
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs font-semibold ${style.badge}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
@@ -263,7 +251,6 @@ export default function ClausesPage() {
                           <span className="text-xs text-gray-600">Page {r.page}</span>
                         </div>
 
-                        {/* Preview text */}
                         <p className={`text-sm text-gray-300 leading-relaxed ${isOpen ? "" : "line-clamp-2"}`}>
                           {r.text}
                         </p>
@@ -280,7 +267,6 @@ export default function ClausesPage() {
           </motion.div>
         )}
 
-        {/* Empty state after search */}
         {!loading && results.length === 0 && query && (
           <motion.div
             initial={{ opacity: 0 }}

@@ -20,7 +20,11 @@ import {
   Search,
   Cpu,
   FolderOpen,
+  X,
 } from "lucide-react";
+
+import { useUIStore } from "@/lib/store";
+import { systemApi } from "@/lib/api";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -46,11 +50,6 @@ const secondaryNavigation = [
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
-
-import { useUIStore } from "@/lib/store";
-import { systemApi } from "@/lib/api";
-import { X } from "lucide-react";
-
 export default function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen, setSidebarOpen } = useUIStore();
@@ -62,8 +61,8 @@ export default function Sidebar() {
   });
 
   const statusLabel = health?.status === "healthy"
-    ? `v${health.version ?? "2.0.0"} · ${health.rag_ready ? "RAG Ready" : "RAG Offline"}`
-    : `v${health?.version ?? "2.0.0"} · Degraded`;
+    ? `v${health.version ?? "2.0.0"} | ${health.rag_ready ? "RAG Ready" : "RAG Offline"}`
+    : `v${health?.version ?? "2.0.0"} | Degraded`;
   const statusDotClass = health?.status === "healthy" ? "bg-brand-emerald" : "bg-amber-400";
 
   const renderNavItem = (item: { name: string; href: string; icon: any }) => {
@@ -107,11 +106,9 @@ export default function Sidebar() {
 
   const SidebarContent = () => (
     <div className="flex grow flex-col gap-y-6 overflow-y-auto bg-background/80 backdrop-blur-xl border-r border-white/5 py-8 h-full shadow-2xl relative">
-      {/* Decorative background glow */}
       <div className="absolute top-0 -left-10 w-40 h-40 bg-brand-blue/10 rounded-full blur-[80px] -z-10" />
       <div className="absolute bottom-0 -right-10 w-40 h-40 bg-brand-purple/10 rounded-full blur-[80px] -z-10" />
 
-      {/* Logo Section */}
       <div className="flex shrink-0 items-center px-8 gap-3 focus-within:outline-none justify-between">
         <Link href="/dashboard" className="flex items-center gap-3 group">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-cyan via-brand-blue to-brand-purple flex items-center justify-center shadow-lg shadow-brand-blue/30 group-hover:shadow-brand-blue/50 transition-all duration-500 group-hover:rotate-6">
@@ -129,12 +126,8 @@ export default function Sidebar() {
           <X className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
-      
-      {/* Search mock or some interactive element could go here */}
 
-      {/* Navigation */}
       <nav className="flex flex-1 flex-col px-4 mt-4 space-y-6">
-        {/* Primary Nav */}
         <div>
           <p className="px-4 mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600/80">
             Audit Engine
@@ -144,7 +137,6 @@ export default function Sidebar() {
           </ul>
         </div>
 
-        {/* Intelligence Nav */}
         <div>
           <p className="px-4 mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600/80 flex items-center gap-1.5">
             <Cpu className="w-3 h-3 text-brand-cyan" />
@@ -155,7 +147,6 @@ export default function Sidebar() {
           </ul>
         </div>
 
-        {/* Secondary Nav */}
         <div>
           <p className="px-4 mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600/80">
             Workspace
@@ -166,7 +157,6 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      {/* Footer Info */}
       <div className="px-8 mt-auto pt-6 border-t border-white/5">
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
@@ -177,7 +167,7 @@ export default function Sidebar() {
             </div>
           </div>
           <div className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-             <Settings className="h-4 w-4 text-gray-500 hover:text-white transition-colors cursor-pointer" />
+            <Settings className="h-4 w-4 text-gray-500 hover:text-white transition-colors cursor-pointer" />
           </div>
         </div>
       </div>
@@ -186,12 +176,10 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Desktop Sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
         <SidebarContent />
       </div>
 
-      {/* Mobile Sidebar */}
       {sidebarOpen && (
         <div className="relative z-50 lg:hidden">
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" aria-hidden="true" onClick={() => setSidebarOpen(false)} />
@@ -203,4 +191,3 @@ export default function Sidebar() {
     </>
   );
 }
-

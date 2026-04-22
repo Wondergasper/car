@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MessageSquare, Send, Bot, User, Loader2, Sparkles,
+  Send, Bot, User, Loader2, Sparkles,
   ChevronDown, BookOpen, Shield,
 } from "lucide-react";
 import { chatApi, auditsApi } from "@/lib/api";
@@ -98,11 +98,9 @@ export default function ChatPage() {
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col max-w-5xl mx-auto relative">
-      {/* Background glows */}
       <div className="absolute -top-20 -left-20 w-64 h-64 bg-brand-purple/10 rounded-full blur-[100px] -z-10" />
       <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-brand-cyan/10 rounded-full blur-[100px] -z-10" />
 
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -119,9 +117,8 @@ export default function ChatPage() {
           </div>
           <div className="flex items-center gap-3 ml-1">
             <p className="text-gray-400 text-sm font-medium">
-              Powered by RAG · Gemini · Mistral · Llama 3
+              Powered by RAG | Gemini | Mistral | Llama 3
             </p>
-            {/* RAG toggle */}
             <button
               onClick={() => setUseRag((v) => !v)}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold transition-all ${
@@ -155,10 +152,8 @@ export default function ChatPage() {
         )}
       </motion.div>
 
-      {/* Chat Window */}
       <div className="flex-1 glass-card rounded-3xl flex flex-col overflow-hidden border border-white/10 shadow-2xl bg-white/[0.02] backdrop-blur-xl relative">
         <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
-          {/* Welcome state */}
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full py-12 text-center max-w-2xl mx-auto">
               <div className="relative mb-6">
@@ -173,7 +168,7 @@ export default function ChatPage() {
               </p>
               <div className="flex items-center gap-1.5 mb-8">
                 <Shield className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-xs text-emerald-400 font-medium">RAG-grounded · Article citations included</span>
+                <span className="text-xs text-emerald-400 font-medium">RAG-grounded | Article citations included</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 {SUGGESTED_QUESTIONS.map((q) => (
@@ -184,7 +179,7 @@ export default function ChatPage() {
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex items-start gap-3">
-                      <span className="text-brand-cyan font-bold mt-0.5">→</span>
+                      <span className="text-brand-cyan font-bold mt-0.5">-&gt;</span>
                       <span>{q}</span>
                     </div>
                   </button>
@@ -193,7 +188,6 @@ export default function ChatPage() {
             </div>
           )}
 
-          {/* Messages */}
           <AnimatePresence initial={false}>
             {messages.map((msg, i) => (
               <motion.div
@@ -226,7 +220,6 @@ export default function ChatPage() {
                     </div>
                   </div>
 
-                  {/* Citations and LLM badge for assistant messages */}
                   {msg.role === "assistant" && (
                     <div className="w-full mt-1 px-1">
                       {msg.modelUsed && (
@@ -251,11 +244,10 @@ export default function ChatPage() {
             ))}
           </AnimatePresence>
 
-          {/* Typing indicator */}
           {loading && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }} 
-              animate={{ opacity: 1, y: 0 }} 
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
               className="flex gap-4"
             >
               <div className="h-10 w-10 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center flex-shrink-0">
@@ -268,7 +260,7 @@ export default function ChatPage() {
                   <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce [animation-delay:300ms]" />
                 </div>
                 {useRag && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="flex items-center gap-2"
@@ -286,7 +278,6 @@ export default function ChatPage() {
           <div ref={bottomRef} className="h-4" />
         </div>
 
-        {/* Input Bar */}
         <div className="border-t border-white/10 p-6 bg-black/20 backdrop-blur-xl">
           <form
             onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
@@ -296,7 +287,7 @@ export default function ChatPage() {
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={useRag ? "Ask about a regulation or your compliance posture…" : "Message CAR-Bot assistant…"}
+              placeholder={useRag ? "Ask about a regulation or your compliance posture..." : "Message CAR-Bot assistant..."}
               disabled={loading}
               className="flex-1 bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-cyan/30 focus:bg-white/[0.05] transition-all disabled:opacity-50 shadow-inner"
             />
@@ -309,7 +300,7 @@ export default function ChatPage() {
             </button>
           </form>
           <p className="text-center text-[10px] text-gray-600 mt-4 font-medium uppercase tracking-[0.2em]">
-            {useRag ? "RAG corpus: NDPA 2023 · GAID 2025 (official PDFs)" : "Responses may vary based on data availability"}
+            {useRag ? "RAG corpus: NDPA 2023 | GAID 2025 (official PDFs)" : "Responses may vary based on data availability"}
           </p>
         </div>
       </div>

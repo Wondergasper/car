@@ -31,7 +31,7 @@ export default function DataAnalysisPage() {
     try {
       await auditsApi.uploadData(formData);
       setSuccess(true);
-      setFile(null); // Clear file after successful upload
+      setFile(null);
     } catch (err: any) {
       console.error("Upload failed", err);
       setError(err.response?.data?.detail || "An error occurred during upload.");
@@ -48,13 +48,12 @@ export default function DataAnalysisPage() {
 
   return (
     <div className="space-y-8 pb-8 max-w-4xl mx-auto mt-8">
-      {/* Page Header */}
       <div>
         <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 tracking-tight">
           Data <span className="text-brand-cyan">Analysis</span>
         </h1>
         <p className="text-gray-400 text-sm sm:text-base">
-          Upload raw data, privacy policies, or JSON exports. CAR-Bot&apos;s AI engine will extract obligations, identify PII, and add it to your organization&apos;s context for the next audit.
+          Upload raw data, privacy policies, or JSON exports. CAR-Bot will parse and stage the file for your organization so the next audit can analyze it alongside your connector data.
         </p>
       </div>
 
@@ -65,12 +64,12 @@ export default function DataAnalysisPage() {
         className="glass-card p-10 rounded-[2rem] border border-white/5 bg-white/[0.01] relative overflow-hidden"
       >
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-cyan/50 to-transparent"></div>
-        
+
         <div className="text-center">
           <div className="flex justify-center mb-6">
             <div className="h-24 w-24 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner relative overflow-hidden">
-               <div className="absolute inset-0 bg-gradient-to-br from-brand-cyan/20 to-brand-blue/20 opacity-50 z-0" />
-               <div className="z-10">{getFileIcon()}</div>
+              <div className="absolute inset-0 bg-gradient-to-br from-brand-cyan/20 to-brand-blue/20 opacity-50 z-0" />
+              <div className="z-10">{getFileIcon()}</div>
             </div>
           </div>
 
@@ -98,10 +97,10 @@ export default function DataAnalysisPage() {
           {file && (
             <div className="space-y-6">
               <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-full border-brand-cyan/30 bg-brand-cyan/5">
-                 <span className="text-gray-200 font-medium">{file.name}</span>
-                 <span className="text-gray-500 text-sm">({(file.size / 1024).toFixed(1)} KB)</span>
+                <span className="text-gray-200 font-medium">{file.name}</span>
+                <span className="text-gray-500 text-sm">({(file.size / 1024).toFixed(1)} KB)</span>
               </div>
-              
+
               <div className="flex justify-center gap-4">
                 <button
                   onClick={() => setFile(null)}
@@ -129,18 +128,18 @@ export default function DataAnalysisPage() {
           )}
 
           {success && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               className="mt-8 p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center justify-center gap-3 text-green-400"
             >
               <CheckCircle className="h-5 w-5" />
-              <span>File analyzed successfully! The extracted intelligence has been added to your organization&apos;s context.</span>
+              <span>File uploaded successfully. It has been staged for use in your next audit run.</span>
             </motion.div>
           )}
 
           {error && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               className="mt-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center justify-center gap-3 text-red-400"

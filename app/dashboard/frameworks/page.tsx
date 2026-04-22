@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Layers, CheckCircle2, AlertTriangle, XCircle,
+  Layers, CheckCircle2,
   ChevronRight, Loader2, ArrowRight, FileText, RefreshCw,
 } from "lucide-react";
 import { frameworksApi } from "@/lib/api";
@@ -31,17 +31,17 @@ interface CrosswalkItem {
 }
 
 const FW_STYLES: Record<string, { gradient: string; border: string; text: string; icon: string }> = {
-  ndpa_2023:     { gradient: "from-blue-600/20 to-blue-800/5",   border: "border-blue-500/30", text: "text-blue-400",   icon: "🇳🇬" },
-  gaid_2025:     { gradient: "from-purple-600/20 to-purple-800/5", border: "border-purple-500/30", text: "text-purple-400", icon: "📋" },
-  cbn_framework: { gradient: "from-green-600/20 to-green-800/5", border: "border-green-500/30",  text: "text-green-400",  icon: "🏦" },
-  ncc_framework: { gradient: "from-orange-600/20 to-orange-800/5", border: "border-orange-500/30", text: "text-orange-400", icon: "📡" },
+  ndpa_2023: { gradient: "from-blue-600/20 to-blue-800/5", border: "border-blue-500/30", text: "text-blue-400", icon: "ND" },
+  gaid_2025: { gradient: "from-purple-600/20 to-purple-800/5", border: "border-purple-500/30", text: "text-purple-400", icon: "AI" },
+  cbn_framework: { gradient: "from-green-600/20 to-green-800/5", border: "border-green-500/30", text: "text-green-400", icon: "CB" },
+  ncc_framework: { gradient: "from-orange-600/20 to-orange-800/5", border: "border-orange-500/30", text: "text-orange-400", icon: "NC" },
 };
 
 const DEFAULT_STYLE = {
   gradient: "from-gray-600/20 to-gray-800/5",
   border: "border-gray-500/30",
   text: "text-gray-400",
-  icon: "📄",
+  icon: "FW",
 };
 
 export default function FrameworksPage() {
@@ -54,9 +54,8 @@ export default function FrameworksPage() {
   const [cwFrom, setCwFrom] = useState("");
   const [cwTo, setCwTo] = useState("");
   const [cwLoading, setCwLoading] = useState(false);
+  const [crosswalkSearched, setCrosswalkSearched] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "controls" | "crosswalk">("overview");
-
-  const token = () => localStorage.getItem("token") || "";
 
   useEffect(() => {
     frameworksApi.list()
@@ -87,6 +86,7 @@ export default function FrameworksPage() {
     if (!cwFrom || !cwTo || cwFrom === cwTo) return;
     setCwLoading(true);
     setCrosswalk([]);
+    setCrosswalkSearched(true);
     try {
       const r = await frameworksApi.crosswalk(cwFrom, cwTo);
       setCrosswalk(r.data.mappings || []);
@@ -98,7 +98,6 @@ export default function FrameworksPage() {
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
-      {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-2">
           <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-brand-cyan flex items-center justify-center shadow-lg shadow-emerald-500/20">
@@ -109,11 +108,10 @@ export default function FrameworksPage() {
           </h1>
         </div>
         <p className="text-gray-400 text-sm ml-1">
-          NDPA 2023 · GAID 2025 · CBN Cybersecurity · NCC Consumer Protection
+          NDPA 2023 | GAID 2025 | CBN Cybersecurity | NCC Consumer Protection
         </p>
       </motion.div>
 
-      {/* Framework cards */}
       {loading ? (
         <div className="flex items-center justify-center py-24">
           <Loader2 className="w-8 h-8 text-brand-cyan animate-spin" />
@@ -136,7 +134,7 @@ export default function FrameworksPage() {
               >
                 <div className="text-3xl mb-3">{style.icon}</div>
                 <p className={`font-bold text-base mb-0.5 ${style.text}`}>{fw.name}</p>
-                <p className="text-xs text-gray-500 mb-3">{fw.issuing_body} · {fw.version}</p>
+                <p className="text-xs text-gray-500 mb-3">{fw.issuing_body} | {fw.version}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-400">
                     <span className="font-bold text-white">{fw.control_count}</span> controls
@@ -149,7 +147,6 @@ export default function FrameworksPage() {
         </div>
       )}
 
-      {/* Detail panel */}
       <AnimatePresence>
         {selectedFw && selectedDetail && (
           <motion.div
@@ -158,30 +155,28 @@ export default function FrameworksPage() {
             exit={{ opacity: 0, height: 0 }}
             className="glass-card rounded-2xl overflow-hidden"
           >
-            {/* Framework Header Section */}
             <div className="px-8 py-8 border-b border-white/5 bg-white/[0.01] relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-brand-cyan/10 rounded-full blur-3xl" />
-               <div className="flex items-center gap-6">
-                  <div className="h-20 w-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-4xl shadow-inner">
-                    {FW_STYLES[selectedDetail.id]?.icon || "📄"}
-                  </div>
-                  <div>
-                    <h2 className="text-3xl font-black text-white tracking-tighter mb-1">{selectedDetail.name}</h2>
-                    <p className="text-gray-500 font-medium">{selectedDetail.issuing_body} · Version {selectedDetail.version}</p>
-                    <div className="flex items-center gap-4 mt-4">
-                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                         <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                         <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Official Source</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-blue/10 border border-brand-blue/20">
-                         <span className="text-[10px] font-bold text-brand-cyan uppercase tracking-widest">{selectedDetail.control_count} Controls Linked</span>
-                      </div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-brand-cyan/10 rounded-full blur-3xl" />
+              <div className="flex items-center gap-6">
+                <div className="h-20 w-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-4xl shadow-inner">
+                  {FW_STYLES[selectedDetail.id]?.icon || "FW"}
+                </div>
+                <div>
+                  <h2 className="text-3xl font-black text-white tracking-tighter mb-1">{selectedDetail.name}</h2>
+                  <p className="text-gray-500 font-medium">{selectedDetail.issuing_body} | Version {selectedDetail.version}</p>
+                  <div className="flex items-center gap-4 mt-4">
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                      <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Official Source</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-blue/10 border border-brand-blue/20">
+                      <span className="text-[10px] font-bold text-brand-cyan uppercase tracking-widest">{selectedDetail.control_count} Controls Linked</span>
                     </div>
                   </div>
-               </div>
+                </div>
+              </div>
             </div>
 
-            {/* Tabs */}
             <div className="flex border-b border-white/5 px-8 pt-2 bg-white/[0.01]">
               {(["overview", "controls", "crosswalk"] as const).map((tab) => (
                 <button
@@ -199,7 +194,6 @@ export default function FrameworksPage() {
             </div>
 
             <div className="p-6">
-              {/* Overview tab */}
               {activeTab === "overview" && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -224,12 +218,11 @@ export default function FrameworksPage() {
                 </motion.div>
               )}
 
-              {/* Controls tab */}
               {activeTab === "controls" && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
                   {controlLoading ? (
                     <div className="flex items-center gap-2 py-8 justify-center text-gray-500">
-                      <Loader2 className="w-5 h-5 animate-spin" /> Loading controls…
+                      <Loader2 className="w-5 h-5 animate-spin" /> Loading controls...
                     </div>
                   ) : controls.length === 0 ? (
                     <p className="text-gray-500 text-sm py-8 text-center">
@@ -285,7 +278,6 @@ export default function FrameworksPage() {
                 </motion.div>
               )}
 
-              {/* Crosswalk tab */}
               {activeTab === "crosswalk" && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
                   <div className="flex items-center gap-3 flex-wrap">
@@ -294,7 +286,7 @@ export default function FrameworksPage() {
                       onChange={(e) => setCwFrom(e.target.value)}
                       className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-brand-cyan transition-all appearance-none"
                     >
-                      <option value="">From framework…</option>
+                      <option value="">From framework...</option>
                       {frameworks.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
                     </select>
                     <ArrowRight className="w-4 h-4 text-gray-500" />
@@ -303,7 +295,7 @@ export default function FrameworksPage() {
                       onChange={(e) => setCwTo(e.target.value)}
                       className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-brand-cyan transition-all appearance-none"
                     >
-                      <option value="">To framework…</option>
+                      <option value="">To framework...</option>
                       {frameworks.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
                     </select>
                     <button
@@ -344,7 +336,7 @@ export default function FrameworksPage() {
                     </div>
                   )}
 
-                  {!cwLoading && crosswalk.length === 0 && cwFrom && cwTo && (
+                  {!cwLoading && crosswalkSearched && crosswalk.length === 0 && cwFrom && cwTo && (
                     <p className="text-sm text-gray-500 py-6 text-center">
                       No crosswalk mappings found between these frameworks.
                     </p>
