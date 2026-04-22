@@ -18,6 +18,8 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
+    rcNumber: "",
+    registrationRole: "compliance_officer",
     industry: "",
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -31,6 +33,8 @@ export default function RegisterPage() {
   const isFormValid =
     formData.companyName.trim() &&
     formData.email.trim() &&
+    formData.rcNumber.trim() &&
+    formData.registrationRole.trim() &&
     passwordStrength.isValid &&
     passwordsMatch &&
     agreedToTerms;
@@ -47,15 +51,17 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      await authApi.register({
-        email: formData.email,
-        password: formData.password,
-        company_name: formData.companyName,
-        industry: formData.industry || undefined,
-      });
+        await authApi.register({
+          email: formData.email,
+          password: formData.password,
+          company_name: formData.companyName,
+          rc_number: formData.rcNumber,
+          registration_role: formData.registrationRole,
+          industry: formData.industry || undefined,
+        });
 
       toast.success("Account created! Please sign in to continue.");
-      router.push("/login?registered=true");
+      router.push("/login?registered=true&redirect=" + encodeURIComponent("/onboarding"));
     } catch (err: any) {
       const msg = err?.response?.data?.detail || "Registration failed. Please try again.";
       setError(msg);
@@ -151,6 +157,39 @@ export default function RegisterPage() {
           </div>
 
           {/* Industry */}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label htmlFor="registrationRole" className="block text-sm font-medium text-gray-300">
+                Sign-up Role
+              </label>
+              <select
+                id="registrationRole"
+                value={formData.registrationRole}
+                onChange={(e) => setFormData({ ...formData, registrationRole: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white transition-all duration-200 focus:bg-white/10 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/30 focus:ring-offset-2 focus:ring-offset-[color:var(--background)]"
+              >
+                <option value="compliance_officer">Compliance Officer</option>
+                <option value="startup_founder">Startup Founder</option>
+                <option value="dpco_consultant">DPCO Consultant</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="rcNumber" className="block text-sm font-medium text-gray-300">
+                CAC / RC Number
+              </label>
+              <input
+                id="rcNumber"
+                type="text"
+                placeholder="RC123456"
+                required
+                value={formData.rcNumber}
+                onChange={(e) => setFormData({ ...formData, rcNumber: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 transition-all duration-200 focus:bg-white/10 focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/30 focus:ring-offset-2 focus:ring-offset-[color:var(--background)]"
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label htmlFor="industry" className="block text-sm font-medium text-gray-300">
               Industry (Optional)

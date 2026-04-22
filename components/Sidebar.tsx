@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Plug,
@@ -18,11 +19,13 @@ import {
   Layers,
   Search,
   Cpu,
+  FolderOpen,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Connectors", href: "/dashboard/connectors", icon: Plug },
+  { name: "Documents", href: "/dashboard/documents", icon: FolderOpen },
   { name: "Audit Reports", href: "/dashboard/reports", icon: FileText },
   { name: "Compliance Rules", href: "/dashboard/rules", icon: Shield },
   { name: "Document Studio", href: "/dashboard/studio", icon: BookOpen },
@@ -33,6 +36,7 @@ const intelligenceNavigation = [
   { name: "AI Chat", href: "/dashboard/chat", icon: MessageSquare },
   { name: "Clause Explorer", href: "/dashboard/clauses", icon: Search },
   { name: "Frameworks", href: "/dashboard/frameworks", icon: Layers },
+  { name: "Data Analysis", href: "/dashboard/analysis", icon: Cpu },
 ];
 
 const secondaryNavigation = [
@@ -44,11 +48,23 @@ const secondaryNavigation = [
 
 
 import { useUIStore } from "@/lib/store";
+import { systemApi } from "@/lib/api";
 import { X } from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen, setSidebarOpen } = useUIStore();
+  const { data: health } = useQuery({
+    queryKey: ["system-health"],
+    queryFn: async () => (await systemApi.health()).data,
+    refetchInterval: 30000,
+    retry: 1,
+  });
+
+  const statusLabel = health?.status === "healthy"
+    ? `v${health.version ?? "2.0.0"} · ${health.rag_ready ? "RAG Ready" : "RAG Offline"}`
+    : `v${health?.version ?? "2.0.0"} · Degraded`;
+  const statusDotClass = health?.status === "healthy" ? "bg-brand-emerald" : "bg-amber-400";
 
   const renderNavItem = (item: { name: string; href: string; icon: any }) => {
     const isActive = pathname === item.href;
@@ -156,8 +172,8 @@ export default function Sidebar() {
           <div className="flex flex-col">
             <p className="text-[10px] text-gray-600 uppercase tracking-widest font-bold">Status</p>
             <div className="flex items-center gap-1.5 mt-1">
-              <div className="h-1.5 w-1.5 rounded-full bg-brand-emerald animate-pulse" />
-              <span className="text-xs font-medium text-gray-400">v2.0.0 · RAG Ready</span>
+              <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${statusDotClass}`} />
+              <span className="text-xs font-medium text-gray-400">{statusLabel}</span>
             </div>
           </div>
           <div className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">

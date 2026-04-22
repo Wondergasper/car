@@ -1,10 +1,12 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://car-backend-bisg.onrender.com";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+console.log("CAR-Bot API Client Initialized with URL:", API_URL);
 
 export const api = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: `${API_URL.replace(/\/$/, "")}/api`,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -36,14 +38,30 @@ export const authApi = {
     email: string;
     password: string;
     company_name: string;
+    rc_number: string;
+    registration_role: string;
     industry?: string;
   }) => api.post("/auth/register", data),
   getProfile: () => api.get("/auth/me"),
+  getOrganization: () => api.get("/auth/organization"),
+  updateOrganization: (data: {
+    name?: string;
+    industry?: string;
+    size?: number;
+    website?: string;
+    rc_number?: string;
+    registration_role?: string;
+    dpo_name?: string;
+    dpo_email?: string;
+    dpo_phone?: string;
+    settings?: Record<string, unknown>;
+  }) => api.patch("/auth/organization", data),
 };
 
 // ─── Connectors ──────────────────────────────────────────────────────────────
 export const connectorsApi = {
   list: () => api.get("/connectors"),
+  listTypes: () => api.get("/connectors/types"),
   get: (id: string) => api.get(`/connectors/${id}`),
   create: (data: { name: string; connector_type_id: string; config: object; sync_interval?: number }) =>
     api.post("/connectors", data),
@@ -76,6 +94,12 @@ export const auditsApi = {
     data: { ids: string[]; action: string; resolution_notes?: string }
   ) => api.post(`/audits/${auditId}/findings/batch`, data),
 
+  // File Upload Demo Route
+  uploadData: (formData: FormData) => 
+    api.post("/audits/upload-data", formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    }),
+
   // WebSocket progress (returns a WS URL, not an axios call)
   progressWsUrl: (auditId: string): string => {
     const wsBase = API_URL.replace(/^http/, "ws");
@@ -102,9 +126,10 @@ export const apiKeysApi = {
 export const documentsApi = {
   list: (type?: string) => api.get("/documents", { params: { type } }),
   get: (id: string) => api.get(`/documents/${id}`),
+  upload: (formData: FormData) => api.post("/documents", formData),
   update: (id: string, data: object) => api.put(`/documents/${id}`, data),
   delete: (id: string) => api.delete(`/documents/${id}`),
-  download: (id: string) => api.get(`/documents/${id}/download`),
+  download: (id: string) => api.get(`/documents/${id}/download`, { responseType: "blob" }),
 };
 
 // ─── Team Management ─────────────────────────────────────────────────────────
@@ -137,11 +162,17 @@ export const ragApi = {
 
 // ─── Frameworks ──────────────────────────────────────────────────────────────
 export const frameworksApi = {
-  list: () => api.get("/frameworks/"),
+  list: () => api.get("/frameworks"),
   get: (id: string) => api.get(`/frameworks/${id}`),
   crosswalk: (fromFw: string, toFw: string) =>
     api.get("/frameworks/crosswalk/map", { params: { from_fw: fromFw, to_fw: toFw } }),
 };
+
+// ─── Compliance Badges ───────────────────────────────────────────────────────
+export const badgeApi = {
+  getSvgUrl: (orgSlug: string) => `${API_URL}/api/badge/${orgSlug}`,
+};
+
 
 // ─── Scheduled Audits ────────────────────────────────────────────────────────
 export const scheduledAuditsApi = {
@@ -157,5 +188,14 @@ export const notificationsApi = {
   createWebhook: (data: { name: string; url: string; events?: string[] }) =>
     api.post("/notifications/webhooks", data),
   deleteWebhook: (id: string) => api.delete(`/notifications/webhooks/${id}`),
+};
+
+// ─── Dashboard ───────────────────────────────────────────────────────────────
+export const dashboardApi = {
+  getStats: () => api.get("/dashboard/stats"),
+};
+
+export const systemApi = {
+  health: () => axios.get(`${API_URL.replace(/\/$/, "")}/health`),
 };
 

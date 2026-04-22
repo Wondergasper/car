@@ -253,18 +253,32 @@ export default function ChatPage() {
 
           {/* Typing indicator */}
           {loading && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-4">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              className="flex gap-4"
+            >
               <div className="h-10 w-10 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center flex-shrink-0">
                 <Bot className="h-5 w-5 text-brand-cyan animate-pulse" />
               </div>
-              <div className="bg-white/[0.04] border border-white/10 rounded-2xl rounded-tl-sm px-6 py-4 flex items-center gap-3 shadow-lg backdrop-blur-md">
+              <div className="bg-white/[0.04] border border-white/10 rounded-2xl rounded-tl-sm px-6 py-4 flex flex-col gap-2 shadow-lg backdrop-blur-md">
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce [animation-delay:0ms]" />
                   <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce [animation-delay:150ms]" />
                   <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce [animation-delay:300ms]" />
                 </div>
                 {useRag && (
-                  <span className="text-xs text-gray-500">Retrieving regulatory clauses…</span>
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center gap-2"
+                  >
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-brand-cyan/60">Scanning Regulatory Corpus</span>
+                    <span className="flex h-1.5 w-1.5 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-cyan opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-brand-cyan"></span>
+                    </span>
+                  </motion.div>
                 )}
               </div>
             </motion.div>
@@ -295,7 +309,7 @@ export default function ChatPage() {
             </button>
           </form>
           <p className="text-center text-[10px] text-gray-600 mt-4 font-medium uppercase tracking-[0.2em]">
-            {useRag ? "Grounded in NDPA 2023 · GAID 2025 · CBN · NCC" : "Responses may vary based on data availability"}
+            {useRag ? "RAG corpus: NDPA 2023 · GAID 2025 (official PDFs)" : "Responses may vary based on data availability"}
           </p>
         </div>
       </div>

@@ -425,7 +425,9 @@ function ReportPreviewModal({
              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div>
                 <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Audit Type</p>
-                <p className="font-semibold text-white capitalize">{audit.audit_type.replace("_", " ")}</p>
+                <p className="font-semibold text-white capitalize">
+                  {(audit.audit_type || "manual_audit").replace("_", " ")}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Total Findings</p>

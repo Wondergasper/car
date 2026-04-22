@@ -6,9 +6,7 @@ import {
   Layers, CheckCircle2, AlertTriangle, XCircle,
   ChevronRight, Loader2, ArrowRight, FileText, RefreshCw,
 } from "lucide-react";
-import axios from "axios";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { frameworksApi } from "@/lib/api";
 
 interface FrameworkSummary {
   id: string;
@@ -61,8 +59,7 @@ export default function FrameworksPage() {
   const token = () => localStorage.getItem("token") || "";
 
   useEffect(() => {
-    axios
-      .get(`${API}/api/frameworks/`, { headers: { Authorization: `Bearer ${token()}` } })
+    frameworksApi.list()
       .then((r) => setFrameworks(r.data))
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -72,9 +69,7 @@ export default function FrameworksPage() {
     setControlLoading(true);
     setControls([]);
     try {
-      const r = await axios.get(`${API}/api/frameworks/${fwId}`, {
-        headers: { Authorization: `Bearer ${token()}` },
-      });
+      const r = await frameworksApi.get(fwId);
       setControls(r.data.controls || []);
     } catch {}
     setControlLoading(false);
@@ -93,10 +88,7 @@ export default function FrameworksPage() {
     setCwLoading(true);
     setCrosswalk([]);
     try {
-      const r = await axios.get(`${API}/api/frameworks/crosswalk/map`, {
-        params: { from_fw: cwFrom, to_fw: cwTo },
-        headers: { Authorization: `Bearer ${token()}` },
-      });
+      const r = await frameworksApi.crosswalk(cwFrom, cwTo);
       setCrosswalk(r.data.mappings || []);
     } catch {}
     setCwLoading(false);
@@ -166,13 +158,36 @@ export default function FrameworksPage() {
             exit={{ opacity: 0, height: 0 }}
             className="glass-card rounded-2xl overflow-hidden"
           >
+            {/* Framework Header Section */}
+            <div className="px-8 py-8 border-b border-white/5 bg-white/[0.01] relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-brand-cyan/10 rounded-full blur-3xl" />
+               <div className="flex items-center gap-6">
+                  <div className="h-20 w-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-4xl shadow-inner">
+                    {FW_STYLES[selectedDetail.id]?.icon || "📄"}
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-black text-white tracking-tighter mb-1">{selectedDetail.name}</h2>
+                    <p className="text-gray-500 font-medium">{selectedDetail.issuing_body} · Version {selectedDetail.version}</p>
+                    <div className="flex items-center gap-4 mt-4">
+                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                         <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                         <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Official Source</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-blue/10 border border-brand-blue/20">
+                         <span className="text-[10px] font-bold text-brand-cyan uppercase tracking-widest">{selectedDetail.control_count} Controls Linked</span>
+                      </div>
+                    </div>
+                  </div>
+               </div>
+            </div>
+
             {/* Tabs */}
-            <div className="flex border-b border-white/10 px-6 pt-4">
+            <div className="flex border-b border-white/5 px-8 pt-2 bg-white/[0.01]">
               {(["overview", "controls", "crosswalk"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2.5 text-sm font-semibold capitalize transition-all border-b-2 -mb-px ${
+                  className={`px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] transition-all border-b-2 -mb-px ${
                     activeTab === tab
                       ? "border-brand-cyan text-brand-cyan"
                       : "border-transparent text-gray-500 hover:text-gray-300"

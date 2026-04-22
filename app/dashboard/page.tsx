@@ -1,66 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import ComplianceOverview from "@/components/ComplianceOverview";
 import ConnectorsList from "@/components/ConnectorsList";
 import RecentAudits from "@/components/RecentAudits";
-import { connectorsApi, auditsApi } from "@/lib/api";
-
-interface DashboardStats {
-  complianceScore: string;
-  activeConnectors: number;
-  openFindings: number;
-  pendingReports: number;
-  loaded: boolean;
-}
+import { dashboardApi } from "@/lib/api";
+import { Shield, Database, AlertCircle, Clock } from "lucide-react";
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats>({
-    complianceScore: "—",
-    activeConnectors: 0,
-    openFindings: 0,
-    pendingReports: 0,
-    loaded: false,
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: async () => {
+      const res = await dashboardApi.getStats();
+      return res.data;
+    },
+    refetchInterval: 30000, // Refresh every 30s
   });
-
-  useEffect(() => {
-    Promise.allSettled([connectorsApi.list(), auditsApi.list()]).then(
-      ([connectorsResult, auditsResult]) => {
-        const connectors =
-          connectorsResult.status === "fulfilled" ? connectorsResult.value.data : [];
-        const audits =
-          auditsResult.status === "fulfilled" ? auditsResult.value.data : [];
-
-        const activeConnectors = connectors.filter(
-          (c: any) => c.status === "active"
-        ).length;
-
-        const completedAudits = audits.filter((a: any) => a.status === "completed");
-        const latestScore =
-          completedAudits.length > 0
-            ? `${completedAudits[completedAudits.length - 1].compliance_score ?? "—"}%`
-            : "—";
-
-        const openFindings = audits.reduce(
-          (sum: number, a: any) => sum + (a.findings_count ?? 0),
-          0
-        );
-
-        const pendingReports = audits.filter(
-          (a: any) => a.status === "in_progress" || a.status === "pending"
-        ).length;
-
-        setStats({
-          complianceScore: latestScore,
-          activeConnectors,
-          openFindings,
-          pendingReports,
-          loaded: true,
-        });
-      }
-    );
-  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -81,35 +37,43 @@ export default function DashboardPage() {
     >
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 tracking-tight">Overview</h1>
-        <p className="text-gray-400 text-sm sm:text-base">Welcome back. Here is the latest state of your compliance audit system.</p>
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 tracking-tight">
+          System <span className="text-brand-cyan">Overview</span>
+        </h1>
+        <p className="text-gray-400 text-sm sm:text-base">
+          Real-time compliance monitoring and data governance dashboard.
+        </p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Compliance Score"
-          value={stats.complianceScore}
-          loading={!stats.loaded}
-          icon="chart"
+          value={stats?.compliance_score !== null ? `${stats?.compliance_score}%` : "—"}
+          loading={isLoading}
+          icon={Shield}
+          color="text-brand-cyan"
         />
         <StatCard
           title="Active Connectors"
-          value={String(stats.activeConnectors)}
-          loading={!stats.loaded}
-          icon="plug"
+          value={String(stats?.active_connectors ?? 0)}
+          loading={isLoading}
+          icon={Database}
+          color="text-brand-purple"
         />
         <StatCard
           title="Total Findings"
-          value={String(stats.openFindings)}
-          loading={!stats.loaded}
-          icon="alert"
+          value={String(stats?.total_findings ?? 0)}
+          loading={isLoading}
+          icon={AlertCircle}
+          color="text-status-error"
         />
         <StatCard
           title="Pending Audits"
-          value={String(stats.pendingReports)}
-          loading={!stats.loaded}
-          icon="clock"
+          value={String(stats?.pending_audits ?? 0)}
+          loading={isLoading}
+          icon={Clock}
+          color="text-brand-blue"
         />
       </div>
 
@@ -135,12 +99,14 @@ function StatCard({
   title,
   value,
   loading,
-  icon,
+  icon: Icon,
+  color,
 }: {
   title: string;
   value: string;
   loading?: boolean;
-  icon?: string;
+  icon: any;
+  color: string;
 }) {
   return (
     <motion.div
@@ -148,24 +114,22 @@ function StatCard({
         hidden: { opacity: 0, scale: 0.95 },
         visible: { opacity: 1, scale: 1 },
       }}
-      className="glass-card p-6 rounded-xl sm:rounded-2xl relative overflow-hidden group hover:shadow-lg transition-all duration-300 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-accent focus-within:ring-offset-background"
+      className="glass-card p-6 rounded-[2rem] border border-white/5 bg-white/[0.01] relative overflow-hidden group hover:border-white/10 transition-all duration-300 shadow-xl"
     >
-      {/* Gradient Background */}
-      <div className="absolute -right-10 -top-10 w-32 h-32 bg-gradient-to-br from-brand-blue/20 to-brand-purple/20 rounded-full blur-2xl group-hover:from-brand-cyan/20 group-hover:to-brand-blue/20 transition-all duration-500" aria-hidden="true" />
+      <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:bg-brand-cyan/10 transition-all duration-500" />
       
-      {/* Card Content */}
-      <div className="relative z-10">
-        <p className="text-xs sm:text-sm font-semibold text-gray-400 uppercase tracking-wider">{title}</p>
-        
-        {loading ? (
-          <div className="mt-4 space-y-2">
-            <div className="h-8 sm:h-10 w-20 sm:w-24 rounded bg-white/10 animate-pulse" aria-busy="true" />
-          </div>
-        ) : (
-          <p className="mt-3 text-3xl sm:text-4xl font-bold text-white tracking-tight" role="status" aria-live="polite">
-            {value}
-          </p>
-        )}
+      <div className="relative z-10 flex items-center gap-4">
+        <div className={`p-3 rounded-2xl bg-white/5 border border-white/10 ${color}`}>
+            <Icon className="h-6 w-6" />
+        </div>
+        <div>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{title}</p>
+            {loading ? (
+                <div className="h-8 w-24 bg-white/10 animate-pulse rounded-lg mt-1" />
+            ) : (
+                <p className="text-2xl font-bold text-white tracking-tight">{value}</p>
+            )}
+        </div>
       </div>
     </motion.div>
   );

@@ -6,9 +6,7 @@ import {
   Search, BookOpen, FileText, ChevronRight, Loader2,
   AlertCircle, Sparkles, Filter, X,
 } from "lucide-react";
-import axios from "axios";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { ragApi } from "@/lib/api";
 
 interface ClauseResult {
   source: string;
@@ -56,7 +54,8 @@ const SAMPLE_QUERIES = [
   "CAR filing deadline and format",
 ];
 
-const FRAMEWORKS = ["All", "NDPA 2023", "GAID 2025", "CBN Cybersecurity Framework", "NCC Consumer Code of Practice"];
+/** Indexed corpus today: NDPA 2023 + GAID 2025 PDFs only (see RAG engine). */
+const FRAMEWORKS = ["All", "NDPA 2023", "GAID 2025"];
 
 export default function ClausesPage() {
   const [query, setQuery] = useState("");
@@ -70,9 +69,7 @@ export default function ClausesPage() {
 
   // Check RAG status on mount
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    axios
-      .get(`${API}/api/rag/status`, { headers: { Authorization: `Bearer ${token}` } })
+    ragApi.status()
       .then((r) => {
         setRagReady(r.data.ready);
         setRagChunks(r.data.document_count);
@@ -88,17 +85,13 @@ export default function ClausesPage() {
     setResults([]);
     setExpandedIdx(null);
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        `${API}/api/rag/search`,
-        {
-          query: searchQuery,
-          k: 8,
-          framework: selectedFramework === "All" ? null : selectedFramework,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await ragApi.search({
+        query: searchQuery,
+        k: 8,
+        framework: selectedFramework === "All" ? null : selectedFramework,
+      });
       setResults(res.data.results || []);
+
     } catch (e: any) {
       setError(e?.response?.data?.detail || "Search failed. Please try again.");
     } finally {
@@ -124,7 +117,7 @@ export default function ClausesPage() {
           </h1>
         </div>
         <p className="text-gray-400 text-sm ml-1">
-          Semantic search across NDPA 2023, GAID 2025, CBN & NCC frameworks
+          Semantic search across NDPA 2023 and GAID 2025 (indexed regulatory PDFs). CBN/NCC can be added to the corpus later.
         </p>
 
         {/* RAG status pill */}
@@ -202,12 +195,12 @@ export default function ClausesPage() {
         {/* Sample queries */}
         {results.length === 0 && !loading && (
           <div className="flex flex-wrap gap-2 pt-1">
-            <span className="text-xs text-gray-600">Try:</span>
+            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider py-1">Quick Search /</span>
             {SAMPLE_QUERIES.map((q) => (
               <button
                 key={q}
                 onClick={() => { setQuery(q); search(q); }}
-                className="text-xs px-3 py-1 rounded-full bg-white/5 border border-white/8 text-gray-400 hover:border-brand-cyan/30 hover:text-brand-cyan transition-all"
+                className="text-[11px] px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:border-brand-cyan/40 hover:text-white transition-all hover:bg-white/10"
               >
                 {q}
               </button>

@@ -1,30 +1,14 @@
-"use client";
-
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Shield, Database, FileCheck, ArrowRight, Zap, CheckCircle2, Lock, Server, Globe } from "lucide-react";
+import { Shield, Database, FileCheck, ArrowRight, Zap, Lock, Server, Globe } from "lucide-react";
 
 export default function Home() {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { staggerChildren: 0.15, delayChildren: 0.1 }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
-  };
-
   return (
-    <div className="min-h-screen bg-background font-sans overflow-hidden">
-      {/* Dynamic Animated Background */}
-      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-brand-blue/20 blur-[120px] mix-blend-screen animate-blob"></div>
-        <div className="absolute top-[20%] right-[-10%] w-[30%] h-[50%] rounded-full bg-brand-purple/20 blur-[120px] mix-blend-screen animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-[-20%] left-[20%] w-[50%] h-[50%] rounded-full bg-brand-cyan/20 blur-[130px] mix-blend-screen animate-blob animation-delay-4000"></div>
+    <div className="min-h-screen bg-background font-sans overflow-x-hidden">
+      {/* Static Background */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] h-[28rem] w-[28rem] rounded-full bg-brand-blue/10 blur-3xl"></div>
+        <div className="absolute top-[15%] right-[-10%] h-[24rem] w-[24rem] rounded-full bg-brand-purple/10 blur-3xl"></div>
+        <div className="absolute bottom-[-20%] left-[20%] h-[30rem] w-[30rem] rounded-full bg-brand-cyan/10 blur-3xl"></div>
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-10"></div>
       </div>
 
@@ -50,7 +34,7 @@ export default function Home() {
                 Sign In
               </Link>
               <Link
-                href="/dashboard"
+                href="/register"
                 className="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-px font-medium text-white transition-transform hover:scale-105 active:scale-95"
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-brand-blue via-brand-purple to-brand-cyan animate-[pulse-slow_4s_linear_infinite] opacity-70 group-hover:opacity-100 transition-opacity"></span>
@@ -67,29 +51,24 @@ export default function Home() {
       {/* Hero Section */}
       <main className="relative pt-24 pb-20 lg:pt-36 lg:pb-32 z-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            className="text-center max-w-5xl mx-auto"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-brand-cyan/20 bg-brand-cyan/5 text-brand-cyan mb-8 backdrop-blur-md shadow-[0_0_15px_rgba(0,223,216,0.1)]">
+          <div className="text-center max-w-5xl mx-auto">
+            <div className="animate-fade-in inline-flex items-center gap-2 px-5 py-2 rounded-full border border-brand-cyan/20 bg-brand-cyan/5 text-brand-cyan mb-8 shadow-[0_0_15px_rgba(0,223,216,0.1)]">
               <Zap className="h-4 w-4 drop-shadow-[0_0_8px_rgba(0,223,216,0.8)]" />
               <span className="text-xs font-bold tracking-widest uppercase">Intelligent Audit Engine</span>
-            </motion.div>
+            </div>
             
-            <motion.h1 variants={itemVariants} className="text-6xl md:text-8xl font-black tracking-tighter text-white mb-8 leading-[1.1] drop-shadow-lg">
+            <h1 className="animate-fade-in text-6xl md:text-8xl font-black tracking-tighter text-white mb-8 leading-[1.1] drop-shadow-lg">
               Compliance, <br className="hidden md:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-purple-400">Automated Intelligently.</span>
-            </motion.h1>
+            </h1>
             
-            <motion.p variants={itemVariants} className="text-lg md:text-2xl text-gray-400 mb-12 max-w-3xl mx-auto leading-relaxed font-light">
+            <p className="animate-fade-in text-lg md:text-2xl text-gray-400 mb-12 max-w-3xl mx-auto leading-relaxed font-light">
               The enterprise-grade platform that continuously audits your data infrastructure, auto-detects PII vulnerabilities, and enforces <strong className="text-white font-semibold">NDPA 2023</strong> & <strong className="text-white font-semibold">GAID 2025</strong> rules.
-            </motion.p>
+            </p>
             
-            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-6">
+            <div className="animate-fade-in flex flex-col sm:flex-row items-center justify-center gap-6">
               <Link
-                href="/dashboard"
+                href="/register"
                 className="w-full sm:w-auto px-8 py-4 rounded-full bg-white text-black font-bold text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-[0_0_40px_-10px_rgba(255,255,255,0.4)] flex items-center justify-center gap-3"
               >
                 Start Free Audit <ArrowRight className="h-5 w-5" />
@@ -100,16 +79,11 @@ export default function Home() {
               >
                 View Documentation
               </Link>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
 
           {/* Abstract Dashboard Mockup */}
-          <motion.div 
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-24 relative mx-auto max-w-6xl"
-          >
+          <div className="animate-fade-in mt-24 relative mx-auto max-w-6xl">
             <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent z-10 pointer-events-none h-full w-full top-1/2"></div>
             <div className="glass-card rounded-2xl border border-white/10 p-2 overflow-hidden shadow-2xl relative bg-black/40">
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-cyan/50 to-transparent"></div>
@@ -144,7 +118,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </main>
 
@@ -169,13 +143,7 @@ export default function Home() {
             <p className="text-gray-400 max-w-2xl mx-auto text-lg">Leave manual checklists behind. CAR-Bot integrates direct into your data plane, analyzing and remediating policy violations in real-time.</p>
           </div>
 
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-8"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={containerVariants}
-          >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <FeatureCard
               icon={<Database className="h-8 w-8 text-brand-cyan drop-shadow-[0_0_10px_rgba(0,223,216,0.8)]" />}
               title="Universal Data Connectors"
@@ -191,7 +159,7 @@ export default function Home() {
               title="Automated Reporting"
               description="Generate cryptographically verifiable CAR reports on a customized schedule, ready for instant regulatory body submission."
             />
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -215,13 +183,7 @@ export default function Home() {
 
 function FeatureCard({ title, description, icon }: { title: string; description: string; icon: React.ReactNode }) {
   return (
-    <motion.div 
-      variants={{
-        hidden: { opacity: 0, y: 40 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } }
-      }}
-      className="glass-card p-8 rounded-3xl glow-border group cursor-pointer relative overflow-hidden"
-    >
+    <div className="glass-card p-8 rounded-3xl glow-border group cursor-pointer relative overflow-hidden">
       <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500 pointer-events-none">
         {icon}
       </div>
@@ -236,6 +198,6 @@ function FeatureCard({ title, description, icon }: { title: string; description:
       <div className="pt-8 mt-4 border-t border-white/5 flex items-center text-sm font-medium text-brand-cyan opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
         Learn more <ArrowRight className="ml-2 h-4 w-4" />
       </div>
-    </motion.div>
+    </div>
   );
 }

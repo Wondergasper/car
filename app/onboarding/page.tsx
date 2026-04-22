@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,6 +24,8 @@ import {
   Layers,
   Zap,
 } from "lucide-react";
+import { authApi, connectorsApi } from "@/lib/api";
+import { buildConnectorConfigFromString, mapCompanySizeToInt } from "@/lib/connectorConfig";
 
 // ─── Validation Schemas ───────────────────────────────────────────────────────
 
@@ -43,8 +45,7 @@ const dpoSchema = z.object({
 
 const connectorSchema = z.object({
   connectorName: z.string().min(2, "Connector name must be at least 2 characters"),
-  connectorType: z.string().min(1, "Please select a connector type"),
-  connectionString: z.string().min(5, "Connection string is required"),
+  connectionString: z.string().min(5, "Connection string or URL is required"),
 });
 
 type CompanyFormData = z.infer<typeof companySchema>;
@@ -96,6 +97,9 @@ const FRAMEWORKS = [
   },
 ];
 
+/** Connector types we can configure from a single URL / connection string in onboarding */
+const ONBOARDING_CONNECTOR_SLUGS = new Set(["postgresql", "mysql", "mongodb", "rest_api"]);
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function OnboardingPage() {
@@ -103,6 +107,46 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selectedFrameworks, setSelectedFrameworks] = useState<string[]>(["ndpa", "gaid"]);
+  const [connectorTypes, setConnectorTypes] = useState<
+    { id: string; slug: string; name: string; category?: string }[]
+  >([]);
+  const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
+  const [typesLoading, setTypesLoading] = useState(false);
+
+  useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      router.replace("/login?redirect=/onboarding");
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (step !== 4) return;
+    let cancelled = false;
+    (async () => {
+      setTypesLoading(true);
+      try {
+        const res = await connectorsApi.listTypes();
+        const rows = (res.data || []).filter(
+          (t: { slug: string }) => ONBOARDING_CONNECTOR_SLUGS.has(t.slug)
+        );
+        if (!cancelled) {
+          setConnectorTypes(rows);
+          setSelectedTypeId((prev) => (prev && rows.some((r: { id: string }) => r.id === prev) ? prev : rows[0]?.id ?? null));
+        }
+      } catch {
+        if (!cancelled) {
+          setConnectorTypes([]);
+          toast.error("Could not load connector types. You can add connectors from the dashboard.");
+        }
+      } finally {
+        if (!cancelled) setTypesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [step]);
 
   const companyForm = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
@@ -116,7 +160,7 @@ export default function OnboardingPage() {
 
   const connectorForm = useForm<ConnectorFormData>({
     resolver: zodResolver(connectorSchema),
-    defaultValues: { connectorName: "", connectorType: "", connectionString: "" },
+    defaultValues: { connectorName: "", connectionString: "" },
   });
 
   const toggleFramework = (id: string) => {
@@ -127,30 +171,88 @@ export default function OnboardingPage() {
     );
   };
 
-  const handleFinish = async (data: ConnectorFormData) => {
+  const saveCompanyAndContinue = async (data: CompanyFormData) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/connectors/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name: data.connectorName,
-          connector_type_id: data.connectorType,
-          connection_string: data.connectionString,
-        }),
+      const sizeNum = mapCompanySizeToInt(data.size);
+      await authApi.updateOrganization({
+        name: data.companyName,
+        industry: data.industry,
+        size: sizeNum,
+        website: data.website?.trim() ? data.website.trim() : undefined,
+        rc_number: data.rcNumber?.trim() ? data.rcNumber.trim() : undefined,
       });
+      setStep(2);
+    } catch (e: unknown) {
+      const msg =
+        (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+        "Could not save organisation details.";
+      toast.error(typeof msg === "string" ? msg : "Could not save organisation details.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      if (!response.ok) throw new Error("Failed to create connector");
-      toast.success("Setup complete! Welcome to CAR-Bot 🎉");
+  const saveDpoAndContinue = async (data: DPOFormData) => {
+    setLoading(true);
+    try {
+      await authApi.updateOrganization({
+        dpo_name: data.dpoName,
+        dpo_email: data.dpoEmail,
+        dpo_phone: data.dpoPhone,
+      });
+      setStep(3);
+    } catch (e: unknown) {
+      const msg =
+        (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+        "Could not save DPO details.";
+      toast.error(typeof msg === "string" ? msg : "Could not save DPO details.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveFrameworksAndContinue = async () => {
+    setLoading(true);
+    try {
+      await authApi.updateOrganization({
+        settings: { onboarding_frameworks: selectedFrameworks },
+      });
+      setStep(4);
+    } catch (e: unknown) {
+      const msg =
+        (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+        "Could not save framework selection.";
+      toast.error(typeof msg === "string" ? msg : "Could not save framework selection.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFinish = async (data: ConnectorFormData) => {
+    const type = connectorTypes.find((t) => t.id === selectedTypeId);
+    if (!type) {
+      toast.error("Select a connector type.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const config = buildConnectorConfigFromString(type.slug, data.connectionString);
+      await connectorsApi.create({
+        name: data.connectorName,
+        connector_type_id: type.id,
+        config,
+      });
+      toast.success("Setup complete! Welcome to CAR-Bot.");
       router.push("/dashboard");
-    } catch {
-      // Even if connector fails, push to dashboard
-      toast.success("Setup complete! Welcome to CAR-Bot 🎉");
-      router.push("/dashboard");
+    } catch (e: unknown) {
+      const err = e as { message?: string; response?: { data?: { detail?: string } } };
+      const detail = err.response?.data?.detail;
+      const msg =
+        (typeof detail === "string" ? detail : null) ||
+        err.message ||
+        "Could not create connector.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -237,16 +339,18 @@ export default function OnboardingPage() {
             <CompanyStep
               key="company"
               form={companyForm}
-              onSubmit={() => setStep(2)}
+              onSubmit={saveCompanyAndContinue}
               onBack={() => setStep(0)}
+              loading={loading}
             />
           )}
           {step === 2 && (
             <DPOStep
               key="dpo"
               form={dpoForm}
-              onSubmit={() => setStep(3)}
+              onSubmit={saveDpoAndContinue}
               onBack={() => setStep(1)}
+              loading={loading}
             />
           )}
           {step === 3 && (
@@ -254,8 +358,9 @@ export default function OnboardingPage() {
               key="framework"
               selected={selectedFrameworks}
               onToggle={toggleFramework}
-              onNext={() => setStep(4)}
+              onNext={saveFrameworksAndContinue}
               onBack={() => setStep(2)}
+              loading={loading}
             />
           )}
           {step === 4 && (
@@ -265,6 +370,10 @@ export default function OnboardingPage() {
               onSubmit={handleFinish}
               onBack={() => setStep(3)}
               loading={loading}
+              connectorTypes={connectorTypes}
+              selectedTypeId={selectedTypeId}
+              onSelectType={setSelectedTypeId}
+              typesLoading={typesLoading}
             />
           )}
         </AnimatePresence>
@@ -388,10 +497,12 @@ function CompanyStep({
   form,
   onSubmit,
   onBack,
+  loading,
 }: {
   form: any;
-  onSubmit: () => void;
+  onSubmit: (data: CompanyFormData) => void | Promise<void>;
   onBack: () => void;
+  loading?: boolean;
 }) {
   const industries = [
     "Finance & Banking", "Healthcare", "Technology", "Retail & E-commerce",
@@ -513,7 +624,8 @@ function CompanyStep({
           </button>
           <button
             type="submit"
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan text-white font-semibold shadow-lg shadow-brand-blue/25 hover:shadow-xl active:scale-[0.98] transition-all"
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan text-white font-semibold shadow-lg shadow-brand-blue/25 hover:shadow-xl active:scale-[0.98] transition-all disabled:opacity-50"
           >
             Continue <ArrowRight className="w-4 h-4" />
           </button>
@@ -529,10 +641,12 @@ function DPOStep({
   form,
   onSubmit,
   onBack,
+  loading,
 }: {
   form: any;
-  onSubmit: () => void;
+  onSubmit: (data: DPOFormData) => void | Promise<void>;
   onBack: () => void;
+  loading?: boolean;
 }) {
   return (
     <motion.div
@@ -627,7 +741,8 @@ function DPOStep({
           </button>
           <button
             type="submit"
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan text-white font-semibold shadow-lg shadow-brand-blue/25 hover:shadow-xl active:scale-[0.98] transition-all"
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan text-white font-semibold shadow-lg shadow-brand-blue/25 hover:shadow-xl active:scale-[0.98] transition-all disabled:opacity-50"
           >
             Continue <ArrowRight className="w-4 h-4" />
           </button>
@@ -644,11 +759,13 @@ function FrameworkStep({
   onToggle,
   onNext,
   onBack,
+  loading,
 }: {
   selected: string[];
   onToggle: (id: string) => void;
-  onNext: () => void;
+  onNext: () => void | Promise<void>;
   onBack: () => void;
+  loading?: boolean;
 }) {
   return (
     <motion.div
@@ -732,8 +849,9 @@ function FrameworkStep({
         </button>
         <button
           type="button"
-          onClick={onNext}
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan text-white font-semibold shadow-lg shadow-brand-blue/25 hover:shadow-xl active:scale-[0.98] transition-all"
+          disabled={loading}
+          onClick={() => void onNext()}
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan text-white font-semibold shadow-lg shadow-brand-blue/25 hover:shadow-xl active:scale-[0.98] transition-all disabled:opacity-50"
         >
           Continue ({selected.length} selected) <ArrowRight className="w-4 h-4" />
         </button>
@@ -749,20 +867,35 @@ function ConnectorStep({
   onSubmit,
   onBack,
   loading,
+  connectorTypes,
+  selectedTypeId,
+  onSelectType,
+  typesLoading,
 }: {
   form: any;
-  onSubmit: (data: ConnectorFormData) => void;
+  onSubmit: (data: ConnectorFormData) => void | Promise<void>;
   onBack: () => void;
   loading: boolean;
+  connectorTypes: { id: string; slug: string; name: string; category?: string }[];
+  selectedTypeId: string | null;
+  onSelectType: (id: string) => void;
+  typesLoading: boolean;
 }) {
-  const connectorTypes = [
-    { id: "postgresql", name: "PostgreSQL",  icon: "🐘" },
-    { id: "mysql",      name: "MySQL",       icon: "🐬" },
-    { id: "mongodb",    name: "MongoDB",     icon: "🍃" },
-    { id: "rest_api",   name: "REST API",    icon: "🔌" },
-    { id: "aws_s3",     name: "AWS S3",      icon: "☁️" },
-    { id: "other",      name: "Other",       icon: "🔧" },
-  ];
+  const router = useRouter();
+  const typeIcons: Record<string, string> = {
+    postgresql: "🐘",
+    mysql: "🐬",
+    mongodb: "🍃",
+    rest_api: "🔌",
+    mssql: "🗄️",
+  };
+  const selectedSlug = connectorTypes.find((t) => t.id === selectedTypeId)?.slug ?? "postgresql";
+  const connectionPlaceholder =
+    selectedSlug === "rest_api"
+      ? "https://api.example.com/v1"
+      : selectedSlug === "mongodb"
+        ? "mongodb://user:pass@host:27017/dbname"
+        : "postgresql://user:pass@host:5432/dbname";
 
   return (
     <motion.div
@@ -792,7 +925,7 @@ function ConnectorStep({
             type="button"
             onClick={() => {
               toast.success("Welcome to CAR-Bot! Add connectors from the dashboard.");
-              window.location.href = "/dashboard";
+              router.push("/dashboard");
             }}
             className="text-brand-cyan hover:underline"
           >
@@ -802,6 +935,16 @@ function ConnectorStep({
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {typesLoading && (
+          <p className="text-xs text-gray-500 text-center py-2">Loading connector types…</p>
+        )}
+        {!typesLoading && connectorTypes.length === 0 && (
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
+            No quick-setup connector types are available (API may be offline). Use{" "}
+            <span className="font-semibold">Skip for now</span> and add a connector from the dashboard.
+          </div>
+        )}
+
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
             Connector Name *
@@ -823,42 +966,32 @@ function ConnectorStep({
           <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
             Type *
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {connectorTypes.map((ct) => (
-              <label
+              <button
                 key={ct.id}
+                type="button"
+                onClick={() => onSelectType(ct.id)}
                 className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border cursor-pointer transition-all text-center ${
-                  form.watch("connectorType") === ct.id
+                  selectedTypeId === ct.id
                     ? "border-brand-cyan bg-brand-cyan/10 text-white"
                     : "border-white/10 bg-white/3 text-gray-400 hover:border-white/20"
                 }`}
               >
-                <input
-                  type="radio"
-                  value={ct.id}
-                  {...form.register("connectorType")}
-                  className="sr-only"
-                />
-                <span className="text-xl">{ct.icon}</span>
+                <span className="text-xl">{typeIcons[ct.slug] ?? "🔌"}</span>
                 <span className="text-xs font-medium">{ct.name}</span>
-              </label>
+              </button>
             ))}
           </div>
-          {form.formState.errors.connectorType && (
-            <p className="text-xs text-red-400 flex items-center gap-1">
-              <AlertCircle className="w-3 h-3" />
-              {form.formState.errors.connectorType.message}
-            </p>
-          )}
         </div>
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-            Connection String *
+            Connection string or URL *
           </label>
           <input
             {...form.register("connectionString")}
-            placeholder="postgresql://user:pass@host:5432/dbname"
+            placeholder={connectionPlaceholder}
             className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-600 font-mono text-sm focus:outline-none focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all"
           />
           {form.formState.errors.connectionString && (
@@ -879,7 +1012,7 @@ function ConnectorStep({
           </button>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || typesLoading || !selectedTypeId || connectorTypes.length === 0}
             className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
           >
             {loading ? (

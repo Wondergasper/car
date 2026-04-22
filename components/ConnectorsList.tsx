@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Plus, Database, CheckCircle, AlertCircle, XCircle, ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { connectorsApi } from "@/lib/api";
@@ -43,70 +43,64 @@ function formatLastSync(lastSync: string | null): string {
 }
 
 export default function ConnectorsList() {
-  const [connectors, setConnectors] = useState<Connector[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    connectorsApi
-      .list()
-      .then((res) => setConnectors(res.data))
-      .catch(() => setError("Failed to load connectors."))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: connectors = [], isLoading, error } = useQuery({
+    queryKey: ["connectors"],
+    queryFn: async () => {
+      const res = await connectorsApi.list();
+      return res.data;
+    },
+    staleTime: 30000,
+  });
 
   return (
-    <div className="glass-card rounded-xl sm:rounded-2xl p-6">
+    <div className="glass-card rounded-[2.5rem] p-8 border border-white/5 bg-white/[0.01]">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-8">
         <div>
-          <h3 className="text-xl sm:text-2xl font-bold text-white">Data Connectors</h3>
-          <p className="text-sm text-gray-400 mt-1">Manage your data source connections</p>
+          <h3 className="text-2xl font-bold text-white tracking-tight">Data <span className="text-gradient">Connectors</span></h3>
+          <p className="text-sm text-gray-500 font-medium">Monitoring {connectors.length} active data pipelines</p>
         </div>
         <button 
-          className="flex items-center gap-x-2 rounded-xl bg-brand-blue hover:bg-brand-blue/80 active:bg-brand-blue/70 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-blue/30 transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent focus-visible:ring-offset-background w-full sm:w-auto justify-center sm:justify-start"
-          aria-label="Add a new connector"
-          title="Add Connector"
+          className="flex items-center gap-x-2 rounded-2xl bg-white/5 hover:bg-white/10 px-6 py-3 text-sm font-bold text-white border border-white/10 transition-all active:scale-95"
         >
-          <Plus className="h-4 w-4" aria-hidden="true" />
+          <Plus className="h-4 w-4" />
           <span>Add Connector</span>
         </button>
       </div>
 
       {/* Loading State */}
-      {loading && (
+      {isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div 
               key={i} 
-              className="p-5 rounded-xl border border-white/5 bg-white/[0.02] animate-pulse h-40 aria-busy"
-              role="status"
-              aria-label="Loading connector"
+              className="p-6 rounded-[2rem] border border-white/5 bg-white/[0.02] animate-pulse h-44"
             />
           ))}
         </div>
       )}
 
       {/* Error State */}
-      {!loading && error && (
+      {!isLoading && error && (
         <div className="text-center py-12 px-4">
           <AlertCircle className="h-12 w-12 text-status-error mx-auto mb-4" aria-hidden="true" />
-          <p className="text-sm sm:text-base text-red-400 font-medium">{error}</p>
+          <p className="text-red-400 font-bold">Connection Failure</p>
+          <p className="text-sm text-gray-500 mt-1">Failed to reach the data orchestration layer.</p>
         </div>
       )}
 
       {/* Empty State */}
-      {!loading && !error && connectors.length === 0 && (
-        <div className="text-center py-12 px-4">
-          <Database className="h-12 w-12 text-gray-600 mx-auto mb-3" aria-hidden="true" />
-          <p className="text-gray-400 font-medium">No connectors yet</p>
-          <p className="text-sm text-gray-600 mt-1">Add a connector to start scanning data sources.</p>
+      {!isLoading && !error && connectors.length === 0 && (
+        <div className="text-center py-16 px-4 rounded-[2rem] border border-dashed border-white/5">
+          <Database className="h-12 w-12 text-gray-700 mx-auto mb-4" />
+          <p className="text-white font-bold text-lg">No pipelines discovered</p>
+          <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">Connect your databases or APIs to start continuous compliance tracking.</p>
         </div>
       )}
 
       {/* Connectors Grid */}
-      {!loading && !error && connectors.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {connectors.map((connector, i) => {
+      {!isLoading && !error && connectors.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          {connectors.map((connector: Connector, i: number) => {
             const status = connector.status ?? "inactive";
             const Icon = statusIcons[status] ?? XCircle;
             return (
@@ -114,39 +108,37 @@ export default function ConnectorsList() {
                 key={connector.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.07 }}
-                className="p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10 transition-all relative group focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-accent focus-within:ring-offset-background"
+                transition={{ delay: i * 0.05 }}
+                className="p-6 rounded-[2rem] border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] hover:border-brand-cyan/20 transition-all relative group"
               >
                 {/* Header */}
-                <div className="flex justify-between items-start mb-4">
-                  <div className="h-10 w-10 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-center flex-shrink-0">
-                    <Database className="h-5 w-5 text-gray-300" aria-hidden="true" />
+                <div className="flex justify-between items-start mb-6">
+                  <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-brand-cyan/40 transition-all">
+                    <Database className="h-6 w-6 text-brand-cyan" aria-hidden="true" />
                   </div>
-                  <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs font-medium ${statusColors[status]}`}>
-                    <Icon className="h-3 w-3" aria-hidden="true" />
-                    <span className="capitalize">{status}</span>
+                  <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold uppercase ${statusColors[status]}`}>
+                    <Icon className="h-3 w-3" />
+                    <span>{status}</span>
                   </div>
                 </div>
 
                 {/* Connector Info */}
                 <div>
-                  <h4 className="text-base sm:text-lg font-semibold text-white group-hover:text-brand-cyan transition-colors truncate">
+                  <h4 className="text-lg font-bold text-white group-hover:text-brand-cyan transition-colors truncate">
                     {connector.name}
                   </h4>
-                  <p className="text-xs sm:text-sm text-gray-500 truncate mt-1">{connector.health_status}</p>
+                  <p className="text-xs text-gray-500 font-medium truncate mt-1">{connector.health_status}</p>
                 </div>
 
                 {/* Footer */}
-                <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4">
-                  <div className="text-xs text-gray-500">
-                    <span className="font-medium">Sync:</span> {formatLastSync(connector.last_sync_at)}
+                <div className="mt-8 flex items-center justify-between border-t border-white/5 pt-5">
+                  <div className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+                    Last: {formatLastSync(connector.last_sync_at)}
                   </div>
                   <button 
-                    className="text-brand-cyan hover:text-brand-blue transition-colors flex items-center gap-1 text-xs sm:text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent focus-visible:ring-offset-background rounded"
-                    aria-label={`Configure ${connector.name}`}
-                    title="Configure"
+                    className="h-8 w-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 hover:text-brand-cyan hover:border-brand-cyan/30 transition-all"
                   >
-                    Configure <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                    <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
               </motion.div>
